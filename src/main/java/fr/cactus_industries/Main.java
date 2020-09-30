@@ -1,6 +1,7 @@
 package fr.cactus_industries;
 
 import fr.cactus_industries.listeners.MessageListener;
+import fr.cactus_industries.tools.Tisstober;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.yaml.snakeyaml.Yaml;
@@ -17,6 +18,9 @@ public class Main {
     
     public static void main(String[] args0){
         String token = "";
+        
+        System.out.println("Démarrage !");
+        
         Yaml yaml = new Yaml();
         File f = new File("./config.yml");
         if(!f.exists()){ // Load config file from resources
@@ -64,6 +68,8 @@ public class Main {
         
         DiscordApi api = new DiscordApiBuilder().setToken(token).login().join(); // Create the api with the given token and log in
         api.addMessageCreateListener(new MessageListener(prefix));
+    
+        Tisstober.Initiate(api);
         
         System.out.println("Bot invite link: " + api.createBotInvite());
     }
