@@ -1,2 +1,6 @@
 /config.yml
-/out/*
+/out/
+/target/
+/build/
+/archive/
+/.idea/

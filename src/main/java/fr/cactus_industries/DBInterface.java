@@ -1,37 +1,56 @@
 package fr.cactus_industries;
 
-import org.javacord.api.DiscordApi;
-
+import fr.cactus_industries.tools.ConfigSpiky;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import org.javacord.api.DiscordApi;
 
 public class DBInterface {
-
-    private final Connection conn;
     
-    public DBInterface(String url, String user, String pass){
-        Connection conn = null;
+    private static Connection conn = null;
     
-        try{
-            conn = DriverManager.getConnection(url, user, pass);
-            System.out.println("Successfully connected to the database.");
-        }catch (SQLException e){
-            System.out.println("[Error] Could not connect to database.");
-            e.printStackTrace();
+    // Renvoie la connexion active en cours ou bien établie une nouvelle connexion
+    public static Connection getDBConnection() {
+        try {
+            if (conn == null || !conn.isValid(3)) {
+                DBInterface.establishConnection();
+            }
+            return conn;
         }
-        this.conn = conn;
+        catch (SQLException throwable) {
+            throwable.printStackTrace();
+            if (DBInterface.establishConnection()) {
+                return conn;
+            }
+            System.out.println("DBInterface could not establish connection with the Database for the moment.");
+            return null;
+        }
     }
     
-    public void Disconnect(DiscordApi api){
+    // Établissement d'une connexion avec la base de donnée
+    private static boolean establishConnection() {
+        try {
+            conn = DriverManager.getConnection("jdbc:" + ConfigSpiky.getConfigString("db.type") + "://" + ConfigSpiky.getConfigString("db.addr")
+                    + "/" + ConfigSpiky.getConfigString("name"),
+                    ConfigSpiky.getConfigString("db.user"),
+                    ConfigSpiky.getConfigString("db.pass"));
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+    
+    // Fermeture de la connexion
+    public static void Disconnect(DiscordApi api) {
         api.disconnect();
         try {
             conn.close();
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             e.printStackTrace();
         }
     }
-
-
-
 }
