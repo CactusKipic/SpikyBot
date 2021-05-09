@@ -2,6 +2,7 @@ package fr.cactus_industries.tools;
 
 import java.util.NoSuchElementException;
 import org.javacord.api.entity.channel.ServerTextChannel;
+import org.javacord.api.entity.permission.Role;
 import org.javacord.api.entity.server.Server;
 
 public class SBToolbox {
@@ -38,6 +39,18 @@ public class SBToolbox {
             System.out.println("Invalid channel.");
         }
         return id;
+    }
+    
+    // Récupération d'un rôle d'un serveur
+    public static Role getRole(String str, Server server){
+        Long roleID = SBToolbox.getRoleID(str);
+        if (roleID == null)
+            return null;
+        try {
+            return server.getRoleById(roleID).get();
+        } catch (NoSuchElementException e) {
+            return null;
+        }
     }
     
     // Récupération de l'ID d'un rôle

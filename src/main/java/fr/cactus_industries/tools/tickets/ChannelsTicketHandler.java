@@ -1,11 +1,11 @@
 package fr.cactus_industries.tools.tickets;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import org.javacord.api.entity.permission.Role;
+
+import fr.cactus_industries.dbInterface.GenericDBInteractions;
+
 import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
+
 import org.javacord.api.entity.server.Server;
 import org.javacord.api.entity.user.User;
 import java.sql.ResultSet;
@@ -113,19 +113,7 @@ public class ChannelsTicketHandler {
     public static boolean updateMessage(long serverID, long chanID, MessageJsonTool ticketMessage) {
         String query = "UPDATE TicketsChannel SET MessageJsonTool='" + new Gson().toJson(ticketMessage) + "' WHERE Server='" + serverID + "' AND Channel='" + chanID + "';";
         
-        Connection con = DBInterface.getDBConnection();
-    
-        if(con != null)
-            // CONNEXION
-            try (Statement stmt = con.createStatement()){
-                // EXECUTION DE L'UPDATE
-                int rs = stmt.executeUpdate(query);
-                return rs != 0; // RENVOIE VRAI SI UNE DONNEE A ETE MAJ
-            } catch (SQLException throwable) {
-                throwable.printStackTrace();
-            }
-        // ERREUR LORS DE L'UPDATE
-        return false;
+        return GenericDBInteractions.executeInsertUpdateDeleteStatement(query);
     }
     
     public static boolean updateMessageID(ServerTextChannel textChannel, long id) {
@@ -135,19 +123,7 @@ public class ChannelsTicketHandler {
     public static boolean updateMessageID(long serverID, long chanID, long messageID) {
         String query = "UPDATE TicketsChannel SET MessageID='" + messageID + "' WHERE Server='" + serverID + "' AND Channel='" + chanID + "';";
         
-        Connection con = DBInterface.getDBConnection();
-    
-        if(con != null)
-            // CONNEXION
-            try (Statement stmt = con.createStatement()){
-                // EXECUTION DE L'UPDATE
-                int rs = stmt.executeUpdate(query);
-                return rs != 0; // RENVOIE VRAI SI UNE DONNEE A ETE MAJ
-            } catch (SQLException throwable) {
-                throwable.printStackTrace();
-            }
-        // ERREUR LORS DE L'UPDATE
-        return false;
+        return GenericDBInteractions.executeInsertUpdateDeleteStatement(query);
     }
     
     public static boolean isChannelTicketed(ServerTextChannel textChannel) {
@@ -157,22 +133,7 @@ public class ChannelsTicketHandler {
     public static boolean isChannelTicketed(long serverID, long chanID) {
         String query = "SELECT Server FROM TicketsChannel WHERE Server='" + serverID + "' AND Channel='" + chanID + "';";
         
-        Connection con = DBInterface.getDBConnection();
-    
-        if(con != null)
-            // CONNEXION
-            try (Statement stmt = con.createStatement()){
-                // RECUPERATION DES DONNEES
-                ResultSet rs = stmt.executeQuery(query);
-                if(rs.next()){ // RENVOIE VRAI POUR UNE DONNEE TROUVÉE (ou plus)
-                    return true;
-                }
-            
-            } catch (SQLException throwable) {
-                throwable.printStackTrace();
-            }
-        // ERREUR
-        return false;
+        return GenericDBInteractions.dataExistStatement(query);
     }
     
     public static boolean deleteTicketOnChannel(ServerTextChannel textChannel) {
@@ -207,70 +168,7 @@ public class ChannelsTicketHandler {
     public static boolean doesUserAlreadyGranted(User user) {
         String query = "SELECT UserID from TicketsChannelGranted WHERE Server='" + user.getId() + "';";
         
-        Connection con = DBInterface.getDBConnection();
-    
-        if(con != null)
-            // CONNEXION
-            try (Statement stmt = con.createStatement()){
-                // RECUPERATION DES DONNEES
-                ResultSet rs = stmt.executeQuery(query);
-                if(rs.next()){ // RENVOIE VRAI POUR UNE DONNEE TROUVÉE (ou plus)
-                    return true;
-                }
-            
-            } catch (SQLException throwable) {
-                throwable.printStackTrace();
-            }
-        // ERREUR
-        return false;
-    }
-    
-    public static boolean addPremiumServer(Server server, String date) {
-        return addPremiumServer(server.getId(), date);
-    }
-    
-    public static boolean addPremiumServer(long serverID, String date) {
-        String query = "INSERT INTO PremiumServer (Server, EndSub) VALUES ('" + serverID + "', '" + date + "');";
-        
-        Connection con = DBInterface.getDBConnection();
-    
-        if(con != null)
-            // CONNEXION
-            try (Statement stmt = con.createStatement()){
-                // EXECUTION DE L'INSERT
-                if(stmt.executeUpdate(query) != 0)
-                    return true;
-            
-            } catch (SQLException throwable) {
-                throwable.printStackTrace();
-            }
-        // RIEN N'A ETE INSÉRÉ
-        return false;
-    }
-    
-    public static boolean isServerPremium(Server server) {
-        return isServerPremium(server.getId());
-    }
-    
-    public static boolean isServerPremium(long serverID) {
-        String query = "Select Server FROM PremiumServer WHERE Server='" + serverID + "';";
-        
-        Connection con = DBInterface.getDBConnection();
-    
-        if(con != null)
-            // CONNEXION
-            try (Statement stmt = con.createStatement()){
-                // RECUPERATION DES DONNEES
-                ResultSet rs = stmt.executeQuery(query);
-                if(rs.next()){ // RENVOIE VRAI POUR UNE DONNEE TROUVÉE (ou plus)
-                    return true;
-                }
-            
-            } catch (SQLException throwable) {
-                throwable.printStackTrace();
-            }
-        // ERREUR
-        return false;
+        return GenericDBInteractions.dataExistStatement(query);
     }
     
     public static boolean deletePremiumServer(Server server) {
@@ -296,37 +194,12 @@ public class ChannelsTicketHandler {
         return false;
     }
     
-    public static Integer getMaxPermLevelOfUser(Server server, User user) {
-        return getMaxPermLevelOfUser(server.getId(), user.getRoles(server).stream().map(role -> "'" + role.getId() + "'").collect(Collectors.joining(", ")));
+    public static Integer getGrantTimeOnChannel(ServerTextChannel channel) {
+        return getGrantTimeOnChannel(channel.getServer().getId(), channel.getId());
     }
     
-    public static Integer getMaxPermLevelOfUser(long serverID, String roleList) {
-        String query = "Select MAX(ranklevel) AS level FROM TicketsRank WHERE Server='" + serverID + "' AND RoleID IN(" + roleList + ");";
-        
-        Connection con = DBInterface.getDBConnection();
-    
-        if(con != null)
-            // CONNEXION
-            try (Statement stmt = con.createStatement()){
-                // RECUPERATION DES DONNEES
-                ResultSet rs = stmt.executeQuery(query);
-                if(rs.next()){
-                    return rs.getInt("level");
-                }
-            
-            } catch (SQLException throwable) {
-                throwable.printStackTrace();
-            }
-        // PAS D'ID ASSOCIE
-        return null;
-    }
-    
-    public static List<Integer> getGrantsOnChannel(ServerTextChannel channel) {
-        return getGrantsOnChannel(channel.getServer().getId(), channel.getId());
-    }
-    
-    public static List<Integer> getGrantsOnChannel(long serverID, long chanID) {
-        String query = "Select GrantLevel, GrantTime FROM TicketsChannel WHERE Server='" + serverID + "' AND Channel='" + chanID + "';";
+    public static Integer getGrantTimeOnChannel(long serverID, long chanID) {
+        String query = "Select GrantTime FROM TicketsChannel WHERE Server='" + serverID + "' AND Channel='" + chanID + "';";
         
         Connection con = DBInterface.getDBConnection();
     
@@ -337,10 +210,7 @@ public class ChannelsTicketHandler {
                 ResultSet rs = stmt.executeQuery(query);
                 if (!rs.next())
                     return null;
-                ArrayList<Integer> res = new ArrayList<>();
-                res.add(rs.getInt("grantlevel"));
-                res.add(rs.getInt("granttime"));
-                return res;
+                return rs.getInt("granttime");
             
             } catch (SQLException throwable) {
                 throwable.printStackTrace();
@@ -356,115 +226,7 @@ public class ChannelsTicketHandler {
     public static boolean setGrantTimeOnChannel(long serverID, long chanID, int time) {
         String query = "UPDATE TicketsChannel SET GrantTime='" + time + "' WHERE Server='" + serverID + "' AND Channel='" + chanID + "';";
         
-        Connection con = DBInterface.getDBConnection();
-        
-        if(con != null)
-            // CONNEXION
-            try (Statement stmt = con.createStatement()){
-                // EXECUTION DE L'UPDATE
-                int rs = stmt.executeUpdate(query);
-                return rs != 0; // RENVOIE VRAI SI UNE DONNEE A ETE MAJ
-            } catch (SQLException throwable) {
-                throwable.printStackTrace();
-            }
-        // ERREUR LORS DE L'UPDATE
-        return false;
-    }
-    
-    public static boolean setPermLevelOnChannel(ServerTextChannel channel, int level) {
-        return setPermLevelOnChannel(channel.getServer().getId(), channel.getId(), level);
-    }
-    
-    public static boolean setPermLevelOnChannel(long serverID, long chanID, int level) {
-        String query = "UPDATE TicketsChannel SET GrantLevel='" + level + "' WHERE Server='" + serverID + "' AND Channel='" + chanID + "';";
-        
-        Connection con = DBInterface.getDBConnection();
-        
-        if(con != null)
-            // CONNEXION
-            try (Statement stmt = con.createStatement()){
-                // EXECUTION DE L'UPDATE
-                int rs = stmt.executeUpdate(query);
-                return rs != 0; // RENVOIE VRAI SI UNE DONNEE A ETE MAJ
-            } catch (SQLException throwable) {
-                throwable.printStackTrace();
-            }
-        // ERREUR LORS DE L'UPDATE
-        return false;
-    }
-    
-    public static Integer getPermLevelOnChannel(ServerTextChannel channel) {
-        return getPermLevelOnChannel(channel.getServer().getId(), channel.getId());
-    }
-    
-    public static Integer getPermLevelOnChannel(long serverID, long chanID) {
-        String query = "SELECT GrantLevel from TicketsChannel WHERE Server='" + serverID + "' AND Channel='" + chanID + "';";
-        
-        Connection con = DBInterface.getDBConnection();
-    
-        if(con != null)
-            // CONNEXION
-            try (Statement stmt = con.createStatement()){
-                // RECUPERATION DES DONNEES
-                ResultSet rs = stmt.executeQuery(query);
-                if(rs.next()){
-                    return rs.getInt("GrantLevel");
-                }
-            
-            } catch (SQLException throwable) {
-                throwable.printStackTrace();
-            }
-        // PAS D'ID ASSOCIE
-        return null;
-    }
-    
-    public static boolean setPermLevelOfRank(Role channel, int level) {
-        return setPermLevelOfRank(channel.getServer().getId(), channel.getId(), level);
-    }
-    
-    public static boolean setPermLevelOfRank(long serverID, long rankID, int level) {
-        String query = "INSERT INTO TicketsRank (Server, RoleID, RankLevel) VALUES ('" + serverID + "', '" + rankID + "', '" + level
-                + "') ON CONFLICT (Server, RoleID) DO UPDATE SET RankLevel=excluded.RankLevel;";
-        
-        Connection con = DBInterface.getDBConnection();
-    
-        if(con != null)
-            // CONNEXION
-            try (Statement stmt = con.createStatement()){
-                // EXECUTION DE L'INSERT
-                if(stmt.executeUpdate(query) != 0)
-                    return true;
-            
-            } catch (SQLException throwable) {
-                throwable.printStackTrace();
-            }
-        // RIEN N'A ETE INSÉRÉ
-        return false;
-    }
-    
-    public static Integer getPermLevelOfRank(Role role) {
-        return getPermLevelOfRank(role.getServer().getId(), role.getId());
-    }
-    
-    public static Integer getPermLevelOfRank(long serverID, long rankID) {
-        String query = "SELECT RankLevel from TicketsRank WHERE Server='" + serverID + "' AND RoleID='" + rankID + "';";
-        
-        Connection con = DBInterface.getDBConnection();
-    
-        if(con != null)
-            // CONNEXION
-            try (Statement stmt = con.createStatement()){
-                // RECUPERATION DES DONNEES
-                ResultSet rs = stmt.executeQuery(query);
-                if(rs.next()){
-                    return rs.getInt("RankLevel");
-                }
-            
-            } catch (SQLException throwable) {
-                throwable.printStackTrace();
-            }
-        // PAS D'ID ASSOCIE
-        return null;
+        return GenericDBInteractions.executeInsertUpdateDeleteStatement(query);
     }
     
     public static boolean userGranted(ServerTextChannel textChannel, User user){
@@ -556,32 +318,6 @@ public class ChannelsTicketHandler {
     public static HashMap<Long, ArrayList<Long>> getAllTicketedChannel() {
         String query = "SELECT Server, Channel from TicketsChannel;";
         
-        Connection con = DBInterface.getDBConnection();
-        
-        HashMap<Long, ArrayList<Long>> serverChannel = new HashMap<>();
-        
-        if(con != null)
-            // CONNEXION
-            try (Statement stmt = con.createStatement()){
-                // RECUPERATION DES DONNEES
-                ResultSet rs = stmt.executeQuery(query);
-                
-                while (rs.next()) {
-                    long server = rs.getLong("Server");
-                    if (!serverChannel.containsKey(server)) {
-                        ArrayList<Long> channelList = new ArrayList<>();
-                        channelList.add(rs.getLong("Channel"));
-                        serverChannel.put(server, channelList);
-                    } else {
-                        serverChannel.get(server).add(rs.getLong("Channel"));
-                    }
-                }
-                return serverChannel;
-            
-            } catch (SQLException throwable) {
-                throwable.printStackTrace();
-            }
-        // PAS D'ID ASSOCIE
-        return null;
+        return GenericDBInteractions.executeGetChannelsFromAllServer(query);
     }
 }

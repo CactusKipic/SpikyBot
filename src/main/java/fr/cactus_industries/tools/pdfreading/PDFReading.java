@@ -1,4 +1,4 @@
-package fr.cactus_industries.tools;
+package fr.cactus_industries.tools.pdfreading;
 
 import java.io.IOException;
 import java.io.InputStream;

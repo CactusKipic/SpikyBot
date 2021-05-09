@@ -9,7 +9,7 @@ import java.time.ZoneId;
 import java.util.concurrent.ExecutionException;
 import fr.cactus_industries.tools.Tisstober;
 import java.io.IOException;
-import fr.cactus_industries.tools.PDFReading;
+import fr.cactus_industries.tools.pdfreading.PDFReading;
 import org.javacord.api.entity.message.MessageAttachment;
 import org.javacord.api.entity.message.Message;
 import java.util.Date;

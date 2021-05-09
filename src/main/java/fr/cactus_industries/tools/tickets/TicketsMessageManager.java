@@ -1,16 +1,17 @@
 package fr.cactus_industries.tools.tickets;
 
 import java.util.*;
+import java.util.concurrent.CompletionException;
 
+import fr.cactus_industries.tools.permissionslevels.PermissionsLevelsHandler;
+import fr.cactus_industries.tools.permissionslevels.SBPermissionType;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.channel.ServerTextChannelUpdater;
-import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.permission.PermissionType;
 import org.javacord.api.entity.permission.PermissionsBuilder;
 import org.javacord.api.entity.server.Server;
 import org.javacord.api.entity.user.User;
-import org.javacord.api.exception.MissingPermissionsException;
 import org.javacord.api.listener.message.reaction.ReactionAddListener;
 
 public class TicketsMessageManager extends TimerTask {
@@ -85,9 +86,8 @@ public class TicketsMessageManager extends TimerTask {
             return;
         }
         Server server = channel.getServer();
-        List<Integer> grants = ChannelsTicketHandler.getGrantsOnChannel(channel);
         // Vérifie si le ticket est public, si non, regarde si l'utilisateur est administrateur, si non, regarde si l'utilisateur a un niveau d'accès suffisant pour ce salon
-        if (grants.get(0) != 0 && !server.isAdmin(user) && ChannelsTicketHandler.getMaxPermLevelOfUser(server, user) < grants.get(0)) {
+        if (!PermissionsLevelsHandler.doesUserHavePermissionsOnChannel(SBPermissionType.TicketChannel, server, channel, user)) {
             System.out.println("User " + user.getName() + " hasn't level required for ticket.");
             return;
         }
@@ -95,15 +95,17 @@ public class TicketsMessageManager extends TimerTask {
         // Ajout de l'utilisateur dans la liste des personnes déjà "autorisés" avant de donner les droits
         if(ChannelsTicketHandler.userGranted(channel, user)) {
             try {
-                updater.addPermissionOverwrite(user, new PermissionsBuilder().setAllowed(new PermissionType[]{PermissionType.SEND_MESSAGES}).build());
+                updater.addPermissionOverwrite(user, new PermissionsBuilder().setAllowed(PermissionType.SEND_MESSAGES).build());
                 updater.update().join();
-            } catch (Exception e){
+            } catch (CompletionException e){
                 System.out.println("Error while updating permissions of a user for ticket.");
                 e.printStackTrace();
                 ChannelsTicketHandler.userNoLongerGranted(user); // On le retire de la liste si erreur
-                return;
+                if(!server.isAdmin(user))
+                    return;
+                System.out.println("User is admin, error probably normal.");
             }
-            timer.schedule(new TicketsMessageManager(channel, user), grants.get(1) * 1000);
+            timer.schedule(new TicketsMessageManager(channel, user), ChannelsTicketHandler.getGrantTimeOnChannel(channel) * 1000);
         } else {
             System.out.println("Something went wrong while adding the little people to the granted list :'(\n*sad cactus noises*");
         }
@@ -118,10 +120,10 @@ public class TicketsMessageManager extends TimerTask {
     public void run() {
         try {
             removeWritePerm(this.channel, this.user);
-            TicketUpdater.updateTicket(this.channel);
         } catch (Exception e){
             System.out.println("Erreur lors du retrait de permissions ou rafraichissement du ticket.");
         }
+        TicketUpdater.updateTicket(this.channel);
         // On retire l'utilisateur de la liste des "autorisés"
         ChannelsTicketHandler.userNoLongerGranted(this.user);
     }

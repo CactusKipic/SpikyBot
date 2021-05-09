@@ -1,20 +1,28 @@
 package fr.cactus_industries.tools.tickets;
 
+import fr.cactus_industries.tools.PremiumServers;
 import fr.cactus_industries.tools.messagesaving.MessageJsonTool;
 
+import java.util.Locale;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import fr.cactus_industries.tools.permissionslevels.PermissionsLevelsHandler;
+import fr.cactus_industries.tools.permissionslevels.SBPermissionType;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.channel.ServerTextChannel;
 import fr.cactus_industries.tools.SBToolbox;
+import org.javacord.api.entity.permission.Role;
+import org.javacord.api.entity.server.Server;
 import org.javacord.api.event.message.MessageCreateEvent;
 
 public class TicketUpdater {
     
     public static void handleCommand(MessageCreateEvent event, String[] args) {
         if (args.length < 3) {
-            event.getChannel().sendMessage("Updateticket usage:\nupdateticket <mess, type, title, desc, color, image, resend> <channel> [value, messageID, empty to delete option]\nupdateticket <granttime, grantlevel, rolelevel> <channel/role> [time value, level]");
+            event.getChannel().sendMessage("Updateticket usage:\nupdateticket <mess, type, title, desc, color, image, resend> <channel> [value, messageID, empty to delete option]\nupdateticket <granttime, grantlevel, rolelevel> <channel/role> [time value, level/remove]");
             return;
         }
         System.out.println(args[1]);
@@ -53,7 +61,7 @@ public class TicketUpdater {
                     event.getChannel().sendMessage("Invalid time number.");
                     return;
                 }
-                if (time > 30 && !ChannelsTicketHandler.isServerPremium(event.getServer().get())) {
+                if (time > 30 && !PremiumServers.isServerPremium(event.getServer().get())) {
                     event.getChannel().sendMessage("Only premium servers can setup grant time over 30 seconds.");
                     return;
                 }
@@ -83,11 +91,12 @@ public class TicketUpdater {
                     event.getChannel().sendMessage("Invalid level number.");
                     return;
                 }
-                if (level > 1 && !ChannelsTicketHandler.isServerPremium(event.getServer().get())) {
+                if (level > 1 && !PremiumServers.isServerPremium(event.getServer().get())) {
                     event.getChannel().sendMessage("Only premium servers can setup grant level over 1.");
                     return;
                 }
-                if (ChannelsTicketHandler.setPermLevelOnChannel(event.getServer().get().getTextChannelById(chanID).get(), level)) {
+                Server server = event.getServer().get();
+                if (PermissionsLevelsHandler.setPermLevelOnChannel(SBPermissionType.TicketChannel, server, server.getTextChannelById(chanID).get(), level)) {
                     event.getChannel().sendMessage("Grant level updated successfully !");
                 } else {
                     event.getChannel().sendMessage("Error, could not update grant level. (Is channel ID valid ?)");
@@ -95,31 +104,40 @@ public class TicketUpdater {
                 break;
             case "rolelevel":
                 if (args.length < 4) {
+                    event.getChannel().sendMessage("Command usage:\nupdateticket rolelevel <role> <level/remove>");
                     break;
                 }
-                Long roleID = SBToolbox.getRoleID(args[2]);
-                if (roleID == null) {
-                    event.getChannel().sendMessage("Invalid role ID.");
+                Role role = SBToolbox.getRole(args[2], event.getServer().get());
+                if (role == null) {
+                    event.getChannel().sendMessage("Invalid role.");
                     return;
                 }
-                try {
-                    level = Integer.parseInt(args[3]);
-                    if (level < 0) {
-                        event.getChannel().sendMessage("Level can't be negative.");
+                if(args[3].toLowerCase(Locale.ROOT).equals("remove")){
+                    if(PermissionsLevelsHandler.deletePermLevelOfRole(SBPermissionType.TicketChannel, role)){
+                        event.getChannel().sendMessage("Role level removed successfully !");
+                    } else {
+                        event.getChannel().sendMessage("Unexpected error, could not delete role level.");
+                    }
+                } else {
+                    try {
+                        level = Integer.parseInt(args[3]);
+                        if (level < 0) {
+                            event.getChannel().sendMessage("Level can't be negative.");
+                            return;
+                        }
+                    } catch (NumberFormatException e) {
+                        event.getChannel().sendMessage("Invalid level number.");
                         return;
                     }
-                } catch (NumberFormatException e) {
-                    event.getChannel().sendMessage("Invalid level number.");
-                    return;
-                }
-                if (level > 1 && !ChannelsTicketHandler.isServerPremium(event.getServer().get())) {
-                    event.getChannel().sendMessage("Only premium servers can setup role level over 1.");
-                    return;
-                }
-                if (ChannelsTicketHandler.setPermLevelOfRank(event.getServer().get().getRoleById(roleID).get(), level)) {
-                    event.getChannel().sendMessage("Role level updated successfully !");
-                } else {
-                    event.getChannel().sendMessage("Error, could not update grant level. (Is role ID valid ?)");
+                    if (level > 1 && !PremiumServers.isServerPremium(event.getServer().get())) {
+                        event.getChannel().sendMessage("Only premium servers can setup role level over 1.");
+                        return;
+                    }
+                    if (PermissionsLevelsHandler.setPermLevelOfRole(SBPermissionType.TicketChannel, role, level)) {
+                        event.getChannel().sendMessage("Role level updated successfully !");
+                    } else {
+                        event.getChannel().sendMessage("Unexpected error, could not update role level.");
+                    }
                 }
                 break;
             case "title":
@@ -283,7 +301,7 @@ public class TicketUpdater {
                 }
                 event.getChannel().sendMessage("Ticket's embed image successfully " + ((newImgLink == null) ? "deleted." : "updated."));
             default:
-                event.getChannel().sendMessage("Updateticket usage:\nupdateticket <mess, type, title, desc, color, image, resend> <channel> [value, messageID, empty to delete option]\nupdateticket <granttime, grantlevel> <channel> [time value, level]");
+                event.getChannel().sendMessage("Updateticket usage:\nupdateticket <mess, type, title, desc, color, image, resend> <channel> [value, messageID, empty to delete option]\nupdateticket <granttime, grantlevel> <channel> [time value, level/remove]");
                 break;
         }
         
@@ -291,8 +309,11 @@ public class TicketUpdater {
     
     public static void forceUpdateTicket(ServerTextChannel channel) {
         Long ticketMessage = ChannelsTicketHandler.getMessageID(channel);
-        
-        channel.getMessageById(ticketMessage).join().delete().join();
+        try {
+            channel.getMessageById(ticketMessage).join().delete().join();
+        } catch (CompletionException e){
+            System.out.println("Old ticket wasn't found. Probably deleted by other.");
+        }
         Message nMessage = ChannelsTicketHandler.getMessage(channel).create().send(channel).join();
         nMessage.addReaction("\ud83c\udf9f");
         ChannelsTicketHandler.updateMessageID(channel, nMessage.getId());

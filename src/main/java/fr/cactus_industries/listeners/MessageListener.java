@@ -6,16 +6,16 @@ import java.util.regex.Matcher;
 import java.util.ArrayList;
 import fr.cactus_industries.Main;
 import fr.cactus_industries.tools.ConfigSpiky;
+import fr.cactus_industries.tools.pdfreading.PDFCommandHandler;
 import fr.cactus_industries.tools.tickets.TicketUpdater;
 import fr.cactus_industries.tools.tickets.ChannelsTicketHandler;
 import java.util.concurrent.CompletionException;
 import fr.cactus_industries.tools.messagesaving.MessageJsonTool;
 import java.util.NoSuchElementException;
 import org.javacord.api.entity.channel.ServerTextChannel;
-import java.io.File;
 import fr.cactus_industries.tools.RemakeRessources;
 import java.io.IOException;
-import fr.cactus_industries.tools.PDFReading;
+import fr.cactus_industries.tools.pdfreading.PDFReading;
 import org.javacord.api.entity.message.MessageAttachment;
 import org.javacord.api.entity.message.Message;
 import java.util.concurrent.ExecutionException;
@@ -52,7 +52,7 @@ public class MessageListener implements MessageCreateListener {
         if (message.startsWith(this.prefix)) {
             System.out.println("It's a command");
             message = message.substring(this.pl);
-            String[] args = message.split(" +", 5);
+            String[] args = message.split(" +", 7); // Séparation des éléments de la commande jusqu'à 7
             System.out.println(args.length + ":" + args[0]);
             Arrays.stream(args).forEach(System.out::println);
             switch (args[0]) {
@@ -84,10 +84,10 @@ public class MessageListener implements MessageCreateListener {
                         break;
                     }
                     break;
-                case "tisstober":
+                case "tisstober": {
                     if (!Permissions.isAdmin(event.getMessageAuthor()))
                         break;
-                    
+    
                     System.out.println("Tisstober");
                     if (args.length >= 2) {
                         switch (args[1]) {
@@ -108,7 +108,7 @@ public class MessageListener implements MessageCreateListener {
                                         .send(event.getChannel());
                                 break;
                             case "putreaction":
-                                TextChannel chan = event.getApi().getTextChannelById((long)Tisstober.getConfig().get("chanID")).get();
+                                TextChannel chan = event.getApi().getTextChannelById((long) Tisstober.getConfig().get("chanID")).get();
                                 try {
                                     chan.getMessages(150).get().forEach(m -> {
                                         if (m.getAuthor().isBotUser())
@@ -121,10 +121,12 @@ public class MessageListener implements MessageCreateListener {
                                     e.printStackTrace();
                                 }
                                 break;
-                            }
+                        }
                         break;
                     }
-                case "ress":
+                    break;
+                }
+                case "ress": {
                     if (!Permissions.isAdmin(event.getMessageAuthor())) {
                         break;
                     }
@@ -135,8 +137,7 @@ public class MessageListener implements MessageCreateListener {
                                 try {
                                     Message mess = event.getChannel().getMessagesBefore(1, event.getMessage()).get().last();
                                     mess.getContent();
-                                }
-                                catch (InterruptedException | ExecutionException e) {
+                                } catch (InterruptedException | ExecutionException e) {
                                     e.printStackTrace();
                                 }
                                 break;
@@ -145,8 +146,7 @@ public class MessageListener implements MessageCreateListener {
                                 List<MessageAttachment> MAL;
                                 if (args.length > 2) {
                                     MAL = event.getChannel().getMessageById(Long.parseLong(args[2])).join().getAttachments();
-                                }
-                                else {
+                                } else {
                                     MAL = event.getMessageAttachments();
                                 }
                                 if (MAL.size() <= 0) {
@@ -158,8 +158,7 @@ public class MessageListener implements MessageCreateListener {
                                     try {
                                         PDFReading.sendPDFTextTo(fileUrl.openStream(), event.getChannel());
                                         System.out.println("Doc translation sent !");
-                                    }
-                                    catch (IOException e) {
+                                    } catch (IOException e) {
                                         e.printStackTrace();
                                     }
                                 }
@@ -168,7 +167,8 @@ public class MessageListener implements MessageCreateListener {
                         break;
                     }
                     break;
-                case "getmess":
+                }
+                case "getmess": {
                     if (!Permissions.isAdmin(event.getMessageAuthor())) {
                         break;
                     }
@@ -179,23 +179,20 @@ public class MessageListener implements MessageCreateListener {
                         Message mess = null;
                         try {
                             mess = event.getChannel().getMessageById(mID).get();
-                        }
-                        catch (InterruptedException e) {
+                        } catch (InterruptedException | ExecutionException e) {
                             e.printStackTrace();
-                        }
-                        catch (ExecutionException e2) {
-                            e2.printStackTrace();
                         }
                         RemakeRessources.parseMessage(mess.getContent()).send(event.getChannel());
                         break;
                     }
                     break;
-                case "test":
+                }
+                case "test": {
                     if (!Permissions.isAdmin(event.getMessageAuthor())) {
                         break;
                     }
                     Server server = event.getServer().get();
-                    
+    
                     User user = event.getMessageAuthor().asUser().get();
     
                     List<Role> roles = server.getRoles(user);
@@ -205,6 +202,7 @@ public class MessageListener implements MessageCreateListener {
                     /*File img = new File("./images/chaine-youtube.png");
                     new MessageBuilder().setEmbed(new EmbedBuilder().setColor(new Color(6277341)).setTitle("__**Canva**__").setDescription("> Tr\u00e8s rapide et simple d'utilisation. \u00c9norm\u00e9ment de mod\u00e8les pour tout et n'importe quoi, d'une affiche \u00e0 une lettre en passant par un calendrier, ou encore une vid\u00e9o ou un CV, il en vaut le d\u00e9tour !\n> Seul b\u00e9mol, le tout est assez limit\u00e9 par rapport \u00e0 des logiciels sp\u00e9cialis\u00e9s. Aussi il vous sera impossible de modifier le fichier en dehors de canva.https://i.imgur.com/fhvX26A.png").setUrl("https://www.canva.com/fr_fr/")).send(event.getChannel());*/
                     break;
+                }
                 /* ------------------------- /*
                 
                     Tickets commands
@@ -335,6 +333,20 @@ public class MessageListener implements MessageCreateListener {
                 /* ------------------------- /*
                 
                     Fin tickets commands
+                
+                /* ------------------------- */
+                /* ------------------------- /*
+                
+                    Début PDFReading commands
+                
+                /* ------------------------- */
+                case "pdfreading": {
+                    PDFCommandHandler.handleCommand(event, args);
+                    break;
+                }
+                /* ------------------------- /*
+                
+                    Fin PDFReading commands
                 
                 /* ------------------------- */
                 /* ------------------------- /*
