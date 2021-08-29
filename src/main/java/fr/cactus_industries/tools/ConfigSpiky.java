@@ -31,6 +31,7 @@ public class ConfigSpiky {
             }
             catch (IOException e) {
                 e.printStackTrace();
+                return false;
             }
         }
         try {

@@ -1,27 +1,34 @@
 package fr.cactus_industries;
 
+import fr.cactus_industries.tisseurs.BumperListener;
 import fr.cactus_industries.tools.Tisstober;
 import fr.cactus_industries.tools.pdfreading.PDFCommandHandler;
+import fr.cactus_industries.tools.tickets.ChannelsTicketHandler;
 import fr.cactus_industries.tools.tickets.TicketsMessageManager;
 import fr.cactus_industries.listeners.ReactionManager;
 import fr.cactus_industries.listeners.MessageListener;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.DiscordApi;
 import fr.cactus_industries.tools.ConfigSpiky;
+import org.javacord.api.entity.channel.*;
 import org.javacord.api.entity.intent.Intent;
 import org.javacord.api.entity.message.Reaction;
+import org.javacord.api.entity.permission.PermissionType;
+import org.javacord.api.entity.permission.PermissionsBuilder;
+import org.javacord.api.entity.server.Server;
+import org.javacord.api.entity.user.User;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
 public class Main{
     
-    static HashMap<Long, String> memory = new HashMap<>();
-    
     static HashMap<Long, Long> newUserMemory = new HashMap<>(); // User, Time
+    
+    static final Logger logger = LogManager.getLogger(Main.class);
     
     public static void main(String[] args0) {
         System.out.println("Démarrage !");
@@ -57,6 +64,9 @@ public class Main{
         
         // Initialisation Tisstober (amené à être remplacé)
         Tisstober.Initiate(api);
+        
+        api.getServerById(555169863291895814L).get()
+                .getTextChannelById(627913609908977684L).get().addMessageCreateListener(new BumperListener());
         
         // Les tisseurs c'est un vrai moulin !!
         api.getServerById(555169863291895814L).get().addServerMemberJoinListener(event -> {

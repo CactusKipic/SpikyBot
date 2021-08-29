@@ -182,7 +182,7 @@ public class MessageListener implements MessageCreateListener {
                         } catch (InterruptedException | ExecutionException e) {
                             e.printStackTrace();
                         }
-                        RemakeRessources.parseMessage(mess.getContent()).send(event.getChannel());
+                        new MessageBuilder().setContent("```"+mess.getEmbeds().get(0).getDescription().get()+"```").send(event.getChannel());
                         break;
                     }
                     break;

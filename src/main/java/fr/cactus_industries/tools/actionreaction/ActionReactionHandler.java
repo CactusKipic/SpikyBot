@@ -3,6 +3,7 @@ package fr.cactus_industries.tools.actionreaction;
 import fr.cactus_industries.tools.SBToolbox;
 import fr.cactus_industries.tools.messagesaving.MessageJsonTool;
 import org.javacord.api.entity.channel.ServerTextChannel;
+import org.javacord.api.entity.server.Server;
 import org.javacord.api.event.message.MessageCreateEvent;
 
 public class ActionReactionHandler {
@@ -16,13 +17,15 @@ public class ActionReactionHandler {
         Long chanID;
         MessageJsonTool msg;
         int level;
+        Server server = event.getServer().get();
         switch (args[1].toLowerCase()) {
             case "resend":
-                textChannel = SBToolbox.getChannel(args[2], event.getServer().get());
+                textChannel = SBToolbox.getChannel(args[2], server);
                 if (textChannel == null) {
                     event.getChannel().sendMessage("Invalid channel. (Can the bot see it ? Is the ID valid ?)");
                     return;
                 }
+                // TODO Resend
                 event.getChannel().sendMessage("Ticket message updated.");
                 break;
         }

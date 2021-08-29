@@ -17,11 +17,13 @@ import java.util.*;
 
 public class PDFCommandHandler {
     
-    private static PDFMessageListener messageListener = new PDFMessageListener();
-    private static PDFReactionListener reactionListener = new PDFReactionListener();
+    private static final PDFMessageListener messageListener = new PDFMessageListener();
+    private static final PDFReactionListener reactionListener = new PDFReactionListener();
+    
+    private static final HashMap<Long, Long> addReactionTimer = new HashMap<>(); // ServerID / Time
     
     public static void handleCommand(MessageCreateEvent event, String[] args) {
-        if (args.length < 3) {
+        if (args.length < 2) {
             event.getChannel().sendMessage("PDFReading usage:\npdfreading <add, remove, addreaction> <channel> [nb days]\nupdateticket <grantlevel, rolelevel> <channel, role> [level, level/remove]");
             return;
         }
@@ -29,7 +31,7 @@ public class PDFCommandHandler {
         ServerTextChannel channel;
         switch (args[1].toLowerCase()) {
             case "add": {
-                if (args.length < 4) {
+                if (args.length < 3) {
                     event.getChannel().sendMessage("Command usage:\npdfreading add <channel>");
                     return;
                 }
@@ -41,6 +43,7 @@ public class PDFCommandHandler {
                 if (PDFDB.addPDFReadingToChannel(channel)) {
                     channel.addReactionAddListener(reactionListener);
                     channel.addMessageCreateListener(messageListener);
+                    event.getChannel().sendMessage("PDFReading successfully added to the channel.");
                 } else {
                     event.getChannel().sendMessage("An unexpected error occurred. Try again later or warn the bot owner.");
                     return;
@@ -48,7 +51,7 @@ public class PDFCommandHandler {
                 break;
             }
             case "remove": {
-                if (args.length < 4) {
+                if (args.length < 3) {
                     event.getChannel().sendMessage("Command usage:\npdfreading remove <channel>");
                     return;
                 }
@@ -60,20 +63,25 @@ public class PDFCommandHandler {
                 if (PDFDB.deletePDFReadingToChannel(channel)) {
                     channel.removeListener(PDFReactionListener.class, reactionListener);
                     channel.removeListener(PDFMessageListener.class, messageListener);
+                    event.getChannel().sendMessage("PDFReading successfully removed from the channel.");
                 } else {
-                    event.getChannel().sendMessage("An unexpected error occurred. Try again later or warn the bot owner.");
+                    event.getChannel().sendMessage("An unexpected error occurred. (Does this channel have PDFReading activated ?)");
                     return;
                 }
                 break;
             }
             case "addreaction":{
-                if(args.length < 5){
+                if(args.length < 4){
                     event.getChannel().sendMessage("Command usage:\npdfreading addreaction <channel> <nb days>");
                     return;
                 }
                 channel = SBToolbox.getChannel(args[2], server);
                 if(channel == null) {
                     event.getChannel().sendMessage("Invalid channel. (Can the bot see it ? Is the ID valid ?)");
+                    return;
+                }
+                if(!PDFDB.isChannelOnPDFReading(channel)){
+                    event.getChannel().sendMessage("This channel has no PDFReading on it.");
                     return;
                 }
                 int nb;
@@ -93,6 +101,7 @@ public class PDFCommandHandler {
                         return;
                     }
                     channel.getMessagesAsStream().forEach(PDFCommandHandler::addReactionOnStream);
+                    event.getChannel().sendMessage("Reactions successfully added.");
                     return;
                 }
                 
@@ -101,6 +110,15 @@ public class PDFCommandHandler {
                         event.getChannel().sendMessage("Number of days for adding reactions on PDF is limited to 30 for non-Premium servers.");
                         return;
                     }
+                if(!event.getMessageAuthor().isBotOwner()){
+                    long serverID = event.getServer().get().getId();
+                    long time = new Date().getTime();
+                    if(addReactionTimer.containsKey(serverID) && addReactionTimer.get(serverID) > time){
+                        event.getChannel().sendMessage("You can add reaction on old messages only once every four hours per server.");
+                        return;
+                    }
+                    addReactionTimer.put(serverID, time + 14_400_000);
+                }
                 Calendar cal = Calendar.getInstance();
                 cal.add(Calendar.DATE, -nb);
                 long dateFrom = cal.getTimeInMillis();
@@ -108,7 +126,7 @@ public class PDFCommandHandler {
                 break;
             }
             case "grantlevel":{
-                if(args.length < 5){
+                if(args.length < 4){
                     event.getChannel().sendMessage("Command usage:\npdfreading grantlevel <channel> <level>");
                     return;
                 }
@@ -133,10 +151,11 @@ public class PDFCommandHandler {
                     return;
                 }
                 PDFDB.setGrantLevelOnChannel(channel, level);
+                event.getChannel().sendMessage("Grant level have been successfully updated on the channel.");
                 break;
             }
             case "rolelevel":{
-                if (args.length < 5) {
+                if (args.length < 4) {
                     event.getChannel().sendMessage("Command usage:\npdfreading rolelevel <role> <level/remove>");
                     break;
                 }

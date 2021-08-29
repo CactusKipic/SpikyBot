@@ -30,6 +30,16 @@ public class PDFDB {
         return executeInsertUpdateDeleteStatement(query);
     }
     
+    public static boolean isChannelOnPDFReading(ServerTextChannel chan){
+        return isChannelOnPDFReading(chan.getServer().getId(), chan.getId());
+    }
+    
+    public static boolean isChannelOnPDFReading(long serverID, long chanID){
+        String query = "SELECT Channel FROM PDFReadingChannels WHERE Server='" + serverID + "' AND Channel='" + chanID + "';";
+        
+        return dataExistStatement(query);
+    }
+    
     public static Boolean setGrantLevelOnChannel(ServerTextChannel chan, int level){
         return setGrantLevelOnChannel(chan.getServer().getId(), chan.getId(), level);
     }
