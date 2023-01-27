@@ -4,6 +4,7 @@ import org.javacord.api.entity.message.Message;
 import org.javacord.api.event.message.reaction.ReactionAddEvent;
 import org.javacord.api.listener.message.reaction.ReactionAddListener;
 
+@Deprecated
 public class TicketsReactionHandler implements ReactionAddListener {
     
     private static TicketsReactionHandler listener = null;
@@ -24,7 +25,7 @@ public class TicketsReactionHandler implements ReactionAddListener {
             if (mess.getAuthor().isYourself() && mess.getReactionByEmoji("\ud83c\udf9f").get().containsYou()) {
                 event.removeReaction().join();
                 System.out.println(event.getServer().get().getRoles(event.requestUser().join()));
-                TicketsMessageManager.grantTemporaryPermission(event.getChannel().asServerTextChannel().get(), event.requestUser().join());
+                TicketsPermissionManager.grantTemporaryPermission(event.getChannel().asServerTextChannel().get(), event.requestUser().join());
             }
         }
     }

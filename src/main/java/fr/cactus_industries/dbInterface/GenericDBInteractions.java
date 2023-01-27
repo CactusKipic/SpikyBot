@@ -26,6 +26,22 @@ public class GenericDBInteractions {
         return false;
     }
     
+    // Renvoie le nombre de ligne retourné par la query ou null si erreur
+    public static Integer dataCountStatement(String query){
+        Connection con = DBInterface.getDBConnection();
+    
+        if(con != null)
+            // CONNEXION
+            try (Statement stmt = con.createStatement()){
+                // EXECUTION DE L'UPDATE
+                return stmt.executeUpdate(query); // RENVOIE VRAI SI UNE DONNEE A ETE MAJ
+            } catch (SQLException throwable) {
+                throwable.printStackTrace();
+            }
+        // ERREUR LORS DE L'UPDATE
+        return null;
+    }
+    
     public static boolean dataExistStatement(String query){
         Connection con = DBInterface.getDBConnection();
     

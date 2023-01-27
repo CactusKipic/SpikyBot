@@ -38,8 +38,8 @@ public class PermissionsLevelsHandler {
         return GenericDBInteractions.executeInsertUpdateDeleteStatement(query);
     }
     
-    public static boolean setPermLevelOnChannel(SBPermissionType type, Server server, ServerChannel chan, int level){
-        return setPermLevelOnChannel(type, server.getId(), chan.getId(), level);
+    public static boolean setPermLevelOnChannel(SBPermissionType type, ServerChannel chan, int level){
+        return setPermLevelOnChannel(type, chan.getServer().getId(), chan.getId(), level);
     }
     
     private static boolean setPermLevelOnChannel(SBPermissionType type, long serverID, long chanID, int level){

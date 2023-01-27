@@ -1,4 +1,4 @@
-package fr.cactus_industries.tools;
+package fr.cactus_industries.tools.ressources;
 
 import java.io.File;
 import java.io.FileInputStream;

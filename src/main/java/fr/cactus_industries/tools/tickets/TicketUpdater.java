@@ -1,7 +1,6 @@
 package fr.cactus_industries.tools.tickets;
 
 import fr.cactus_industries.tools.PremiumServers;
-import fr.cactus_industries.tools.messagesaving.MessageJsonTool;
 
 import java.util.Locale;
 import java.util.concurrent.CompletionException;
@@ -18,6 +17,7 @@ import org.javacord.api.entity.permission.Role;
 import org.javacord.api.entity.server.Server;
 import org.javacord.api.event.message.MessageCreateEvent;
 
+@Deprecated
 public class TicketUpdater {
     
     public static void handleCommand(MessageCreateEvent event, String[] args) {
@@ -28,7 +28,7 @@ public class TicketUpdater {
         System.out.println(args[1]);
         ServerTextChannel textChannel;
         Long chanID;
-        MessageJsonTool msg;
+        MessageJsonTicket msg;
         int level;
         switch (args[1].toLowerCase()) {
             case "resend":
@@ -96,7 +96,7 @@ public class TicketUpdater {
                     return;
                 }
                 Server server = event.getServer().get();
-                if (PermissionsLevelsHandler.setPermLevelOnChannel(SBPermissionType.TicketChannel, server, server.getTextChannelById(chanID).get(), level)) {
+                if (PermissionsLevelsHandler.setPermLevelOnChannel(SBPermissionType.TicketChannel, server.getTextChannelById(chanID).get(), level)) {
                     event.getChannel().sendMessage("Grant level updated successfully !");
                 } else {
                     event.getChannel().sendMessage("Error, could not update grant level. (Is channel ID valid ?)");
@@ -269,12 +269,13 @@ public class TicketUpdater {
                     event.getChannel().sendMessage("Error. Does this channel have a ticket ?");
                     return;
                 }
-                msg.haveEmbed(embed);
+                msg.setEmbed(embed);
                 if (!ChannelsTicketHandler.updateMessage(textChannel, msg)) {
                     event.getChannel().sendMessage("Unexpected error while updating ticket's type.");
                     return;
                 }
                 event.getChannel().sendMessage("Ticket's embed successfully " + (embed ? "enabled" : "disabled"));
+                return;
             case "image":
                 textChannel = SBToolbox.getChannel(args[2], event.getServer().get());
                 if (textChannel == null) {
@@ -314,8 +315,8 @@ public class TicketUpdater {
         } catch (CompletionException e){
             System.out.println("Old ticket wasn't found. Probably deleted by other.");
         }
-        Message nMessage = ChannelsTicketHandler.getMessage(channel).create().send(channel).join();
-        nMessage.addReaction("\ud83c\udf9f");
+        Message nMessage = ChannelsTicketHandler.getMessage(channel).create(channel.getApi()).send(channel).join();
+        // nMessage.addReaction("\ud83c\udf9f"); // old code
         ChannelsTicketHandler.updateMessageID(channel, nMessage.getId());
     }
     
@@ -324,8 +325,8 @@ public class TicketUpdater {
         
         if (ticketMessage != channel.getMessages(1).join().getNewestMessage().get().getId()) {
             channel.getMessageById(ticketMessage).join().delete().join();
-            Message nMessage = ChannelsTicketHandler.getMessage(channel).create().send(channel).join();
-            nMessage.addReaction("\ud83c\udf9f");
+            Message nMessage = ChannelsTicketHandler.getMessage(channel).create(channel.getApi()).send(channel).join();
+            // nMessage.addReaction("\ud83c\udf9f");
             ChannelsTicketHandler.updateMessageID(channel, nMessage.getId());
         }
     }

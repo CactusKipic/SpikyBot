@@ -1,11 +1,14 @@
 package fr.cactus_industries.tools.tickets;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 
 import fr.cactus_industries.dbInterface.GenericDBInteractions;
 
 import java.util.ArrayList;
 
+import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.server.Server;
 import org.javacord.api.entity.user.User;
 import java.sql.ResultSet;
@@ -18,6 +21,7 @@ import org.javacord.api.entity.message.Message;
 import fr.cactus_industries.tools.messagesaving.MessageJsonTool;
 import org.javacord.api.entity.channel.ServerTextChannel;
 
+@Deprecated
 public class ChannelsTicketHandler {
     
     public static boolean addTicketOnChannel(ServerTextChannel textChannel, MessageJsonTool ticketMessage) {
@@ -25,11 +29,11 @@ public class ChannelsTicketHandler {
     }
     
     public static boolean addTicketOnChannel(ServerTextChannel textChannel, MessageJsonTool ticketMessage, Integer time) {
-        Message mess = ticketMessage.create().send(textChannel).join();
+        Message mess = ticketMessage.create(textChannel.getApi()).send(textChannel).join();
         long messageID = mess.getId();
-        mess.addReaction("\ud83c\udf9f");
+        // mess.addReaction("\ud83c\udf9f"); // Old code
         if (addTicketOnChannel(textChannel.getServer().getId(), textChannel.getId(), messageID, ticketMessage, time)) {
-            TicketsMessageManager.addChannel(textChannel);
+            TicketsPermissionManager.addChannel(textChannel);
             return true;
         }
         return false;
@@ -81,11 +85,11 @@ public class ChannelsTicketHandler {
         return null;
     }
     
-    public static MessageJsonTool getMessage(ServerTextChannel textChannel) {
+    public static MessageJsonTicket getMessage(ServerTextChannel textChannel) {
         return getMessage(textChannel.getServer().getId(), textChannel.getId());
     }
     
-    public static MessageJsonTool getMessage(long serverID, long chanID) {
+    public static MessageJsonTicket getMessage(long serverID, long chanID) {
         String query = "SELECT MessageJsonTool from TicketsChannel WHERE Server='" + serverID + "' AND Channel='" + chanID + "';";
         
         Connection con = DBInterface.getDBConnection();
@@ -96,7 +100,7 @@ public class ChannelsTicketHandler {
                 // RECUPERATION DES DONNEES
                 ResultSet rs = stmt.executeQuery(query);
                 if(rs.next()){
-                    return new Gson().fromJson(rs.getString("MessageJsonTool"), MessageJsonTool.class);
+                    return new Gson().fromJson(rs.getString("MessageJsonTool"), MessageJsonTicket.class);
                 }
             
             } catch (SQLException throwable) {
@@ -106,11 +110,11 @@ public class ChannelsTicketHandler {
         return null;
     }
     
-    public static boolean updateMessage(ServerTextChannel textChannel, MessageJsonTool ticketMessage) {
+    public static boolean updateMessage(ServerTextChannel textChannel, MessageJsonTicket ticketMessage) {
         return updateMessage(textChannel.getServer().getId(), textChannel.getId(), ticketMessage);
     }
     
-    public static boolean updateMessage(long serverID, long chanID, MessageJsonTool ticketMessage) {
+    public static boolean updateMessage(long serverID, long chanID, MessageJsonTicket ticketMessage) {
         String query = "UPDATE TicketsChannel SET MessageJsonTool='" + new Gson().toJson(ticketMessage) + "' WHERE Server='" + serverID + "' AND Channel='" + chanID + "';";
         
         return GenericDBInteractions.executeInsertUpdateDeleteStatement(query);
@@ -143,7 +147,7 @@ public class ChannelsTicketHandler {
         catch (Exception e) {
             System.out.println("Error, probably no ticket message found.");
         }
-        TicketsMessageManager.removeChannel(textChannel);
+        TicketsPermissionManager.removeChannel(textChannel);
         return deleteTicketOnChannel(textChannel.getServer().getId(), textChannel.getId());
     }
     
@@ -165,8 +169,8 @@ public class ChannelsTicketHandler {
         return false;
     }
     
-    public static boolean doesUserAlreadyGranted(User user) {
-        String query = "SELECT UserID from TicketsChannelGranted WHERE Server='" + user.getId() + "';";
+    public static boolean doesUserAlreadyGranted(TextChannel channel, User user) {
+        String query = "SELECT UserID from TicketsChannelGranted WHERE Channel='"+ channel.getId() +"' AND UserID='" + user.getId() + "';";
         
         return GenericDBInteractions.dataExistStatement(query);
     }
@@ -229,12 +233,25 @@ public class ChannelsTicketHandler {
         return GenericDBInteractions.executeInsertUpdateDeleteStatement(query);
     }
     
-    public static boolean userGranted(ServerTextChannel textChannel, User user){
-        return userGranted(textChannel.getServer().getId(), textChannel.getId(), user.getId());
+    public static boolean deleteGrantTimeOnChannel(ServerTextChannel channel) {
+        return deleteGrantTimeOnChannel(channel.getServer().getId(), channel.getId());
     }
     
-    public static boolean userGranted(long serverID, long chanID, long userID){
-        String query = "INSERT INTO TicketsChannelGranted (UserID, Server, Channel) VALUES ('" + userID + "', '" + serverID + "', '" + chanID + "');";
+    public static boolean deleteGrantTimeOnChannel(long serverID, long chanID) {
+        String query = "DELETE FROM TicketsChannel WHERE Server='" + serverID + "' AND Channel='" + chanID + "';";
+        
+        return GenericDBInteractions.executeInsertUpdateDeleteStatement(query);
+    }
+    
+    public static boolean userGranted(ServerTextChannel textChannel, User user, int grantTime){
+        return userGranted(textChannel.getServer().getId(), textChannel.getId(), user.getId(), grantTime);
+    }
+    
+    public static boolean userGranted(long serverID, long chanID, long userID, int grantTime){
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.SECOND, grantTime);
+        String query = "INSERT INTO TicketsChannelGranted (UserID, Server, Channel, EndGrant) " +
+                "VALUES ('" + userID + "', '" + serverID + "', '" + chanID + "', '"+ cal.getTimeInMillis() +"');";
         
         Connection con = DBInterface.getDBConnection();
         
@@ -252,8 +269,8 @@ public class ChannelsTicketHandler {
         return false;
     }
     
-    public static boolean userNoLongerGranted(User user) {
-        String query = "DELETE FROM TicketsChannelGranted WHERE UserID='" + user.getId() + "';";
+    public static boolean userNoLongerGranted(User user, TextChannel channel) {
+        String query = "DELETE FROM TicketsChannelGranted WHERE UserID='" + user.getId() + "' AND Channel='"+channel.getId()+"';";
         
         Connection con = DBInterface.getDBConnection();
     
@@ -271,12 +288,12 @@ public class ChannelsTicketHandler {
         return false;
     }
     
-    public static HashMap<Long, HashMap<Long, ArrayList<Long>>> getAllGrantedUsers() {
-        String query = "SELECT Server, Channel, UserID from TicketsChannelGranted;";
+    public static HashMap<Long, HashMap<Long, HashMap<Long, Long>>> getAllGrantedUsers() {
+        String query = "SELECT Server, Channel, UserID, EndGrant from TicketsChannelGranted;";
         
         Connection con = DBInterface.getDBConnection();
         
-        HashMap<Long, HashMap<Long, ArrayList<Long>>> serverChannel = new HashMap<>();
+        HashMap<Long, HashMap<Long, HashMap<Long, Long>>> serverChannel = new HashMap<>();
         
     
         if(con != null)
@@ -287,7 +304,7 @@ public class ChannelsTicketHandler {
                 
                 while (rs.next()) {
                     long server = rs.getLong("Server");
-                    HashMap<Long, ArrayList<Long>> channelMap;
+                    HashMap<Long, HashMap<Long, Long>> channelMap;
                     // Ajout des salons dans les serveurs
                     if (!serverChannel.containsKey(server)) { // Serveur inexistant
                         channelMap = new HashMap<>();
@@ -296,15 +313,15 @@ public class ChannelsTicketHandler {
                         channelMap = serverChannel.get(server); // Récupération de la map existante
                     }
                     long channel = rs.getLong("Channel");
-                    ArrayList<Long> users;
+                    HashMap<Long, Long> users;
                     // Ajout des users dans les salons
                     if(!channelMap.containsKey(channel)){ // Salon inexistant
-                        users = new ArrayList<>();
+                        users = new HashMap<>();
                         channelMap.put(channel, users); // Ajout d'une liste pour les users
                     } else {
                         users = channelMap.get(channel); // Récupération de la liste existante
                     }
-                    users.add(rs.getLong("UserID")); // Ajoute de l'ID du user actuel
+                    users.put(rs.getLong("UserID"), rs.getLong("EndGrant")); // Ajoute de l'ID du user actuel
                 }
                 return serverChannel;
             
@@ -319,5 +336,11 @@ public class ChannelsTicketHandler {
         String query = "SELECT Server, Channel from TicketsChannel;";
         
         return GenericDBInteractions.executeGetChannelsFromAllServer(query);
+    }
+    
+    public static Integer getNumberOfTicketedChannel(Server server) {
+        String query = "SELECT Channel from TicketsChannel WHERE Server='"+server.getId()+"';";
+        
+        return GenericDBInteractions.dataCountStatement(query);
     }
 }

@@ -32,8 +32,8 @@ public class BumperListener implements MessageCreateListener {
                         String str = embeds.get(0).getDescription().get();
                         Pattern pattern = Pattern.compile("<@!?([0-9]*)>");
                         Calendar cal = Calendar.getInstance();
-                        
-                        if(str.matches("(?s)<@!?[0-9]*>,.*?Bump effectué !.*")){
+                        // System.out.println(str);
+                        if(str.matches("(?s)<@!?[0-9]*>.*? :thumbsup:.*?https://disboard.org/.*")){
                             System.out.println("Ca bump");
                             long id = Long.parseLong(str.substring(str.indexOf('@') + 1, str.indexOf('>')));
                             BumperDB.addPointsTo(id, cal, 1);
@@ -41,7 +41,7 @@ public class BumperListener implements MessageCreateListener {
                             new MessageBuilder().setEmbed(getScoreboardEmbed(event.getApi(), cal))
                                 .send(event.getChannel());
                         }
-                        if(str.matches("<@!?[0-9]*>, attendez encore [0-9]{1,3} minutes avant que le serveur puisse être bumpé !")){
+                        if(str.matches("<@!?[0-9]*>.*? [0-9]{1,3} .*")){
                             System.out.println("Ca bump mal");
                             long id = Long.parseLong(str.substring(str.indexOf('@') + 1, str.indexOf('>')));
                             BumperDB.addPointsTo(id, cal, -0.25);

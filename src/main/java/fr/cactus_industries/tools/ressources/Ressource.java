@@ -1,4 +1,4 @@
-package fr.cactus_industries.tools;
+package fr.cactus_industries.tools.ressources;
 
 import java.io.IOException;
 import java.net.MalformedURLException;

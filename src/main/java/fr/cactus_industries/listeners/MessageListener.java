@@ -6,14 +6,16 @@ import java.util.regex.Matcher;
 import java.util.ArrayList;
 import fr.cactus_industries.Main;
 import fr.cactus_industries.tools.ConfigSpiky;
-import fr.cactus_industries.tools.pdfreading.PDFCommandHandler;
+import fr.cactus_industries.tools.tickets.MessageJsonTicket;
 import fr.cactus_industries.tools.tickets.TicketUpdater;
 import fr.cactus_industries.tools.tickets.ChannelsTicketHandler;
 import java.util.concurrent.CompletionException;
 import fr.cactus_industries.tools.messagesaving.MessageJsonTool;
 import java.util.NoSuchElementException;
+
+import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.ServerTextChannel;
-import fr.cactus_industries.tools.RemakeRessources;
+
 import java.io.IOException;
 import fr.cactus_industries.tools.pdfreading.PDFReading;
 import org.javacord.api.entity.message.MessageAttachment;
@@ -23,14 +25,15 @@ import fr.cactus_industries.tools.Tisstober;
 import java.util.regex.Pattern;
 import org.javacord.api.entity.channel.TextChannel;
 import fr.cactus_industries.tools.Permissions;
-import org.javacord.api.entity.permission.Role;
+import org.javacord.api.entity.message.component.ActionRow;
+import org.javacord.api.entity.message.component.Button;
+import org.javacord.api.entity.message.component.ButtonStyle;
 import org.javacord.api.entity.server.Server;
 import java.awt.Color;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.message.MessageBuilder;
 import java.util.Arrays;
 
-import org.javacord.api.entity.user.User;
 import org.javacord.api.event.message.MessageCreateEvent;
 import org.javacord.api.listener.message.MessageCreateListener;
 
@@ -191,13 +194,33 @@ public class MessageListener implements MessageCreateListener {
                     if (!Permissions.isAdmin(event.getMessageAuthor())) {
                         break;
                     }
-                    Server server = event.getServer().get();
-    
-                    User user = event.getMessageAuthor().asUser().get();
-    
-                    List<Role> roles = server.getRoles(user);
-    
-                    event.getChannel().sendMessage("NB: " + roles.size());
+                    new MessageBuilder()
+                            .setContent("Contenu...")
+                            .addEmbed(new EmbedBuilder().setTitle("Embed test"))
+                            .addComponents(ActionRow.of(Button.create("Test", ButtonStyle.SUCCESS, "", "\uD83C\uDF9F")))
+                            .send(event.getChannel());
+                    
+                    
+                    /*File img = new File("./images/chaine-youtube.png");
+                    new MessageBuilder().setEmbed(new EmbedBuilder().setColor(new Color(6277341)).setTitle("__**Canva**__").setDescription("> Tr\u00e8s rapide et simple d'utilisation. \u00c9norm\u00e9ment de mod\u00e8les pour tout et n'importe quoi, d'une affiche \u00e0 une lettre en passant par un calendrier, ou encore une vid\u00e9o ou un CV, il en vaut le d\u00e9tour !\n> Seul b\u00e9mol, le tout est assez limit\u00e9 par rapport \u00e0 des logiciels sp\u00e9cialis\u00e9s. Aussi il vous sera impossible de modifier le fichier en dehors de canva.https://i.imgur.com/fhvX26A.png").setUrl("https://www.canva.com/fr_fr/")).send(event.getChannel());*/
+                    break;
+                }
+                case "update": {
+                    if (!Permissions.isOwner(event.getMessageAuthor())) {
+                        break;
+                    }
+                    DiscordApi api = event.getApi();
+                    ChannelsTicketHandler.getAllTicketedChannel().forEach((serverID, channelList) -> {
+                        Server server = api.getServerById(serverID).get();
+                        channelList.forEach(channelID -> {
+                            ServerTextChannel textChannel = server.getTextChannelById(channelID).get();
+                            MessageJsonTicket messageJsonTicket = ChannelsTicketHandler.getMessage(textChannel);
+                            messageJsonTicket.getButtonList().add(
+                                    new MessageJsonTool.ButtonJson("spiky:ticket", ButtonStyle.PRIMARY, "Take a ticket", "\uD83C\uDF9F"));
+                            ChannelsTicketHandler.updateMessage(textChannel, messageJsonTicket);
+                        });
+                    });
+                    
                     
                     /*File img = new File("./images/chaine-youtube.png");
                     new MessageBuilder().setEmbed(new EmbedBuilder().setColor(new Color(6277341)).setTitle("__**Canva**__").setDescription("> Tr\u00e8s rapide et simple d'utilisation. \u00c9norm\u00e9ment de mod\u00e8les pour tout et n'importe quoi, d'une affiche \u00e0 une lettre en passant par un calendrier, ou encore une vid\u00e9o ou un CV, il en vaut le d\u00e9tour !\n> Seul b\u00e9mol, le tout est assez limit\u00e9 par rapport \u00e0 des logiciels sp\u00e9cialis\u00e9s. Aussi il vous sera impossible de modifier le fichier en dehors de canva.https://i.imgur.com/fhvX26A.png").setUrl("https://www.canva.com/fr_fr/")).send(event.getChannel());*/
@@ -245,7 +268,7 @@ public class MessageListener implements MessageCreateListener {
                                     event.getChannel().sendMessage("Error while reading given message by ID. Is the message ID valid ?");
                                     break;
                                 }
-                                messTool.haveEmbed(true);
+                                messTool.setEmbed(true);
                                 messTool.setEmbTitle(mess2.getContent());
                                 Color color = null;
                                 String imageLink = null;
@@ -273,7 +296,7 @@ public class MessageListener implements MessageCreateListener {
                                 }
                             }
                             else {
-                                messTool.haveEmbed(true);
+                                messTool.setEmbed(true);
                                 messTool.setEmbTitle("Click on the reaction below to post a message on this channel.");
                             }
                             ChannelsTicketHandler.addTicketOnChannel(addChannel, messTool);
@@ -341,7 +364,7 @@ public class MessageListener implements MessageCreateListener {
                 
                 /* ------------------------- */
                 case "pdfreading": {
-                    PDFCommandHandler.handleCommand(event, args);
+                    //PDFCommandHandler.handleCommand(event, args);
                     break;
                 }
                 /* ------------------------- /*
@@ -385,7 +408,12 @@ public class MessageListener implements MessageCreateListener {
         
         long chID = event.getChannel().getId();
         if (chID == (Long) Tisstober.getConfig().get("chanID")) {
-            event.getMessage().addReaction(event.getMessageAuthor().isBotUser() ? "\ud83d\udc4d" : "\ud83d\udc96");
+            if(!event.getMessageAuthor().isBotUser()){
+                DiscordApi api = event.getApi();
+                event.getMessage().addReaction("\ud83d\udc96").join();
+                event.getMessage().addReactions(api.getCustomEmojiById(638783077946228737L).get(), api.getCustomEmojiById(751127016623046668L).get(), api.getCustomEmojiById(838397317945753621L).get());
+            }
+            // event.getMessage().addReaction(event.getMessageAuthor().isBotUser() ? "\ud83d\udc4d" : "\ud83d\udc96");
         } else if (ConfigSpiky.getConfigObj("PDF.chanList", new ArrayList().getClass()).contains(chID)) {
             List<MessageAttachment> att = event.getMessageAttachments();
             if (att.size() > 0 && att.get(0).getFileName().endsWith(".pdf")) {

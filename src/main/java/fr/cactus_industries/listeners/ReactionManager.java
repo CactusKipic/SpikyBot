@@ -18,12 +18,13 @@ import java.util.ArrayList;
 import org.javacord.api.event.message.reaction.ReactionAddEvent;
 import java.util.HashMap;
 import org.javacord.api.listener.message.reaction.ReactionAddListener;
+import org.springframework.stereotype.Service;
 
 public class ReactionManager {
-    
+    @Service
     public static class ReactionAdded implements ReactionAddListener {
         
-        private static HashMap<Long, Long> PDFCooldown = new HashMap<>();
+        private static final HashMap<Long, Long> PDFCooldown = new HashMap<>();
         private static int PDFCooldownClean = 0;
         
         public void onReactionAdd(final ReactionAddEvent event) {
@@ -31,7 +32,7 @@ public class ReactionManager {
             final long chID = event.getChannel().getId();
             
             if (!event.requestUser().join().isBot()) {
-                if (ConfigSpiky.getConfigObj("PDF.chanList", new ArrayList().getClass()).contains(chID)) {
+                if (ConfigSpiky.getConfigObj("PDF.chanList", ArrayList.class).contains(chID)) {
                     if (event.requestReaction().join().get().getEmoji().equalsEmoji("\ud83e\udd16")) {
                         event.removeReaction();
                         final long date = new Date().getTime();
@@ -77,7 +78,7 @@ public class ReactionManager {
                         int day = mesCal.get(Calendar.DAY_OF_MONTH);
                         final Calendar limitCal = (Calendar)mesCal.clone();
                         final String[] str = Tisstober.getConfigString("hour").split(":");
-                        limitCal.set(Calendar.DECEMBER, Integer.parseInt(str[0]));
+                        limitCal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(str[0]));
                         limitCal.set(Calendar.MINUTE, Integer.parseInt(str[1]));
                         if (mesCal.compareTo(limitCal) <= 0) {
                             --day;

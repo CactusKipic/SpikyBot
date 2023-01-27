@@ -11,18 +11,26 @@ import org.javacord.api.entity.message.MessageAttachment;
 import org.javacord.api.entity.permission.Role;
 import org.javacord.api.entity.server.Server;
 import org.javacord.api.event.message.MessageCreateEvent;
+import org.springframework.stereotype.Service;
 
 import java.net.URL;
 import java.util.*;
 
+@Deprecated
 public class PDFCommandHandler {
     
-    private static final PDFMessageListener messageListener = new PDFMessageListener();
-    private static final PDFReactionListener reactionListener = new PDFReactionListener();
+    private final PDFMessageListener messageListener;
+    private final PDFReactionListener reactionListener;
     
-    private static final HashMap<Long, Long> addReactionTimer = new HashMap<>(); // ServerID / Time
+    private final HashMap<Long, Long> addReactionTimer = new HashMap<>(); // ServerID / Time
     
-    public static void handleCommand(MessageCreateEvent event, String[] args) {
+    public PDFCommandHandler(PDFMessageListener messageListener, PDFReactionListener reactionListener, DiscordApi api) {
+        this.messageListener = messageListener;
+        this.reactionListener = reactionListener;
+        this.init(api);
+    }
+    
+    public void handleCommand(MessageCreateEvent event, String[] args) {
         if (args.length < 2) {
             event.getChannel().sendMessage("PDFReading usage:\npdfreading <add, remove, addreaction> <channel> [nb days]\nupdateticket <grantlevel, rolelevel> <channel, role> [level, level/remove]");
             return;
@@ -201,7 +209,7 @@ public class PDFCommandHandler {
         
     }
     
-    public static void init(DiscordApi api){
+    private void init(DiscordApi api){
         PDFDB.getAllPDFReadingOnChannel().forEach((key, val) -> {
             Server server = api.getServerById(key).get();
             val.forEach(c ->{

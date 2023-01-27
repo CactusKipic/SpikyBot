@@ -5,7 +5,7 @@ public enum SBPermissionType {
     
     // Name of the permission type (Table of the stored permission level, Table of the stored required level)
     TicketChannel("ticketsrank", "ticketschannel"),
-    PDFReading("pdfreadingrank", "pdfreadingchannels");
+    PDFReading("pdfreadingrank", "t_pdfreading_channel");
     
     private final String permissionLevel;
     private final String requiredLevel;

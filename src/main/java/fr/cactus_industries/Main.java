@@ -1,29 +1,28 @@
 package fr.cactus_industries;
 
+import fr.cactus_industries.commands.Commands;
+import fr.cactus_industries.commands.SlashCommandListener;
+import fr.cactus_industries.listeners.*;
 import fr.cactus_industries.tisseurs.BumperListener;
 import fr.cactus_industries.tools.Tisstober;
 import fr.cactus_industries.tools.pdfreading.PDFCommandHandler;
-import fr.cactus_industries.tools.tickets.ChannelsTicketHandler;
-import fr.cactus_industries.tools.tickets.TicketsMessageManager;
-import fr.cactus_industries.listeners.ReactionManager;
-import fr.cactus_industries.listeners.MessageListener;
+import fr.cactus_industries.tools.pdfreading.PDFSlashHandler;
+import fr.cactus_industries.tools.tickets.TicketsPermissionManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.DiscordApi;
 import fr.cactus_industries.tools.ConfigSpiky;
-import org.javacord.api.entity.channel.*;
+import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.intent.Intent;
-import org.javacord.api.entity.message.Reaction;
-import org.javacord.api.entity.permission.PermissionType;
-import org.javacord.api.entity.permission.PermissionsBuilder;
-import org.javacord.api.entity.server.Server;
-import org.javacord.api.entity.user.User;
+import org.javacord.api.entity.message.Message;
+import org.javacord.api.entity.message.MessageBuilder;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.util.*;
-import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
+//@SpringBootApplication
 public class Main{
     
     static HashMap<Long, Long> newUserMemory = new HashMap<>(); // User, Time
@@ -52,19 +51,31 @@ public class Main{
         // Connexion
         DiscordApi api = new DiscordApiBuilder().setToken(token).setAllIntentsExcept(Intent.GUILD_PRESENCES).login().join();
         
+        // Ajout des listeners de mise à jour (server join, server leave, modif role)
+        /*api.addServerJoinListener(SpikyServerJoinListener.getInstance());
+        api.addRoleChangePermissionsListener(SpikyRoleChangePermissionListener.getInstance());
+        api.addServerChangeOwnerListener(SpikyOwnerChangeListener.getInstance());
+        
         // Ajout des listeners de base
         api.addMessageCreateListener(new MessageListener(prefix));
         api.addReactionAddListener(new ReactionManager.ReactionAdded());
         
         // Initialisation des tickets
-        TicketsMessageManager.init(api);
+        TicketsPermissionManager.init(api);
         
         // Initialisation de la lecture de PDF
-        PDFCommandHandler.init(api);
+        PDFSlashHandler.init(api);
         
         // Initialisation Tisstober (amené à être remplacé)
         Tisstober.Initiate(api);
         
+        // Ajout des commandes
+        Commands.addCommands(api);
+        
+        // Ajout du listener pour les Slashcommand
+        api.addSlashCommandCreateListener(new SlashCommandListener());*/
+        
+        // Ajout du listener pour le !d bump scoreboard
         api.getServerById(555169863291895814L).get()
                 .getTextChannelById(627913609908977684L).get().addMessageCreateListener(new BumperListener());
         
@@ -72,6 +83,14 @@ public class Main{
         api.getServerById(555169863291895814L).get().addServerMemberJoinListener(event -> {
             long userId = event.getUser().getId();
             long curTime = new Date().getTime();
+            if(event.getServer().getMemberCount() == 420) {
+                ServerTextChannel textChannel = event.getServer().getTextChannelById(580774929767596043L).get();
+                Message mess420 = textChannel.sendMessage("Ca y est, c'est enfin arrivé ! Nous sommes désormais 420 sur le serveur !").join();
+                new MessageBuilder().setContent("https://tenor.com/view/420-blaze-it-simpsons-the-gif-13774936")
+                        .replyTo(mess420).send(textChannel).join();
+                new MessageBuilder().setContent("https://tenor.com/view/the-simpson-homer-simpson-drive-chill-high-gif-8367291")
+                        .replyTo(mess420).send(textChannel);
+            }
             newUserMemory = new HashMap<>(newUserMemory.entrySet().stream().filter(e -> e.getValue() + 300_000 > curTime)
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
             newUserMemory.put(userId, curTime);

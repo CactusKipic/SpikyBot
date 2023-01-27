@@ -1,21 +1,38 @@
 package fr.cactus_industries.tools.pdfreading;
 
+import fr.cactus_industries.database.interaction.service.PDFReadingService;
 import fr.cactus_industries.tools.permissionslevels.PermissionsLevelsHandler;
 import fr.cactus_industries.tools.permissionslevels.SBPermissionType;
 import org.javacord.api.entity.message.MessageAttachment;
+import org.javacord.api.entity.permission.Role;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.event.message.reaction.ReactionAddEvent;
 import org.javacord.api.listener.message.reaction.ReactionAddListener;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Service
 public class PDFReactionListener implements ReactionAddListener {
     
-    private final static HashMap<Long, Long> cooldownMap = new HashMap<>(); // ID User | Time
+    private final PDFReadingService pdfReadingService;
+    
+    private static final HashMap<Long, Long> cooldownMap = new HashMap<>(); // ID User | Time
     public static int clearCounter = 0;
+    private static PDFReactionListener listener = null;
+    
+    public PDFReactionListener(PDFReadingService pdfReadingService) {
+        this.pdfReadingService = pdfReadingService;
+        listener = this;
+    }
+    
+    public static PDFReactionListener getInstance() {
+        return listener;
+    }
     
     @Override
     public void onReactionAdd(ReactionAddEvent event) {
@@ -44,7 +61,9 @@ public class PDFReactionListener implements ReactionAddListener {
                     
                     URL PDFUrl = MAL.get(0).getUrl();
                     if(PDFUrl.getPath().toLowerCase(Locale.ROOT).endsWith(".pdf")){
-                        if(PermissionsLevelsHandler.doesUserHavePermissionsOnChannel(SBPermissionType.PDFReading, event.getServerTextChannel().get(), user)) {
+                        //if(PermissionsLevelsHandler.doesUserHavePermissionsOnChannel(SBPermissionType.PDFReading, event.getServerTextChannel().get(), user)) {
+                        if(pdfReadingService.canUse(event.getServerTextChannel().get(),
+                                user.getRoles(event.getServer().get()).stream().map(Role::getId).collect(Collectors.toList()))){
                             cooldownMap.put(event.getUserId(), date + 30_000);
                             try {
                                 PDFReading.sendPDFTextTo(PDFUrl.openStream(), user);

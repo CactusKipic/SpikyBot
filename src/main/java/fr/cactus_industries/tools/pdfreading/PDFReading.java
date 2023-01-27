@@ -21,7 +21,7 @@ public class PDFReading {
             
             if (!document.isEncrypted()) {
                 PDFTextStripperByArea stripper = new PDFTextStripperByArea();
-                stripper.setSortByPosition(true);
+                //stripper.setSortByPosition(true);
                 PDFTextStripper textStripper = new PDFTextStripper();
                 textStripper.setParagraphStart(" ");
                 
@@ -31,7 +31,9 @@ public class PDFReading {
                     System.out.println("PDF's text sent to a non user.");
                 }
                 
-                textStripper.setSortByPosition(true);
+                //textStripper.setSortByPosition(true);
+                textStripper.setDropThreshold(2.25f);
+                
                 for (String s : PDFReading.cutdownPDF(textStripper.getText(document))) {
                     new MessageBuilder().setContent(s).send(target).join();
                 }
@@ -55,7 +57,7 @@ public class PDFReading {
         int i = 0;
         StringBuilder sBuild = new StringBuilder();
         for (String s : LBuf) {
-            if ((i += s.length()) > 1999) {
+            if ((i += s.length()) > 1999 && s.length() != 0) {
                 int y = sBuild.length();
                 if (y > 1) {
                     char c1 = sBuild.charAt(y - 1);
@@ -63,11 +65,13 @@ public class PDFReading {
                     if (!(c2 != '\n' && c2 != '\f' || c1 != '\n' && c1 != '\f')) {
                         sBuild.append("\u1cbc");
                     }
-                } else if (sBuild.charAt(y - 1) == '\n') {
+                } else if (y != 0 && sBuild.charAt(y - 1) == '\n') {
                     sBuild.append("\u1cbc");
                 }
-                LRes.add(sBuild.toString());
-                sBuild = new StringBuilder(s);
+                if(sBuild.length() > 0){
+                    LRes.add(sBuild.toString());
+                    sBuild = new StringBuilder(s);
+                }
                 i = s.length();
                 continue;
             }
