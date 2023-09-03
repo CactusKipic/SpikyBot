@@ -7,9 +7,12 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.entity.message.MessageBuilder;
 import org.yaml.snakeyaml.Yaml;
 
+@Slf4j
 public class RemakeRessources {
     
     private Map<String, Object> config = null;
@@ -27,8 +30,8 @@ public class RemakeRessources {
             if (txtres != null) {
                 text.add(txtres);
             }
-            System.out.println("Match");
-            System.out.println("Http: " + httpres + "\nTxt: " + txtres);
+            log.info("Match");
+            log.info("Http: " + httpres + "\nTxt: " + txtres);
         });
         Ressource ress = new Ressource(links, text);
         return ress.makeEmbed();
@@ -55,7 +58,7 @@ public class RemakeRessources {
     private void loadConfig() {
         File f = new File("./ressources.yml");
         if (!f.exists()) {
-            System.out.println("Config file for ressources not found !");
+            log.info("Config file for ressources not found !");
             return;
         }
         try {
@@ -63,7 +66,7 @@ public class RemakeRessources {
         }
         catch (FileNotFoundException e) {
             e.printStackTrace();
-            System.out.println("Could not load ressources config.");
+            log.info("Could not load ressources config.");
         }
     }
 }

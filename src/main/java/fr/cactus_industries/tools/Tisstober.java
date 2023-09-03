@@ -9,10 +9,13 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Map;
 import java.util.Timer;
+
+import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.TextChannel;
 import org.yaml.snakeyaml.Yaml;
 
+@Slf4j
 public class Tisstober {
     
     private static DiscordApi api;
@@ -23,14 +26,14 @@ public class Tisstober {
     public static void Initiate(DiscordApi discordapi) {
         File f = new File("./tisstober.yml");
         if (!f.exists()) {
-            System.out.println("Config file for tisstober not found !");
+            log.info("Config file for tisstober not found !");
             return;
         }
         try {
             config = new Yaml().load(new FileInputStream(f));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            System.out.println("Could not load tisstober config.");
+            log.info("Could not load tisstober config.");
             return;
         }
         api = discordapi;
@@ -60,12 +63,12 @@ public class Tisstober {
         catch (ParseException e) {
             e.printStackTrace();
         }
-        System.out.println("Date fin: " + sdf.format(endDate.getTime()) + "\nAjd heure ajustée: " + sdf.format(cal.getTime()));
+        log.info("Date fin: " + sdf.format(endDate.getTime()) + "\nAjd heure ajustée: " + sdf.format(cal.getTime()));
         
         if (cal.compareTo(endDate) <= 0)
             timer.schedule(new TissSchedule(api, api.getChannelById((long) config.get("chanID")).get().asTextChannel().get(), true), cal.getTime());
         else {
-            System.out.println("Fin du Tisstober");
+            log.info("Fin du Tisstober");
         }
     }
     
@@ -102,14 +105,14 @@ public class Tisstober {
     public static boolean ReloadYml() {
         File f = new File("./tisstober.yml");
         if(!f.exists()){
-            System.out.println("Config file for tisstober not found !");
+            log.info("Config file for tisstober not found !");
             return false;
         }
         try {
             config = new Yaml().load(new FileInputStream(f));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            System.out.println("Could not load tisstober config.");
+            log.info("Could not load tisstober config.");
             return false;
         }
         return true;

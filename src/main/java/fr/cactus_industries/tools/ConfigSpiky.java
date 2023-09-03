@@ -3,6 +3,8 @@ package fr.cactus_industries.tools;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.FileInputStream;
+
+import lombok.extern.slf4j.Slf4j;
 import org.yaml.snakeyaml.Yaml;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -11,6 +13,7 @@ import java.io.FileOutputStream;
 import java.io.File;
 import java.util.Map;
 
+@Slf4j
 public class ConfigSpiky {
     
     private static Map<String, Object> config = null;
@@ -39,7 +42,7 @@ public class ConfigSpiky {
         }
         catch (FileNotFoundException e2) {
             e2.printStackTrace();
-            System.out.println("Could not load config.");
+            log.info("Could not load config.");
             return false;
         }
         return true;

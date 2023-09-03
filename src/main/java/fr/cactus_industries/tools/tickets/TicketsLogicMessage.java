@@ -2,6 +2,7 @@ package fr.cactus_industries.tools.tickets;
 
 import fr.cactus_industries.database.interaction.service.TicketService;
 import fr.cactus_industries.database.schema.table.TTicketChannelEntity;
+import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.message.Message;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.concurrent.ExecutionException;
 
+@Slf4j
 @Service
 public class TicketsLogicMessage {
     
@@ -24,7 +26,7 @@ public class TicketsLogicMessage {
     public void updateTicket(ServerTextChannel textChannel) {
         final TTicketChannelEntity ticketChannel = ticketService.findChannel(textChannel).orElse(null);
         if(ticketChannel == null) {
-            System.out.println("The ticket channel was not found while resending ticket...");
+            log.info("The ticket channel was not found while resending ticket...");
             return;
         }
         final Message message = textChannel.getMessages(1).join().getNewestMessage().orElse(null);
@@ -38,7 +40,7 @@ public class TicketsLogicMessage {
     public void resendTicket(ServerTextChannel textChannel) {
         final TTicketChannelEntity ticketChannel = ticketService.findChannel(textChannel).orElse(null);
         if(ticketChannel == null) {
-            System.out.println("The ticket channel was not found while resending ticket...");
+            log.info("The ticket channel was not found while resending ticket...");
             return;
         }
         deleteOldAndSendNewTicket(textChannel, ticketChannel);
@@ -48,12 +50,12 @@ public class TicketsLogicMessage {
         try {
             textChannel.getMessageById(ticketChannel.getMessageId()).get().delete();
         } catch (InterruptedException e) {
-            System.out.println("Erreur lors de la récupération de l'actuel message de ticket... (s:"+textChannel.getServer().getName()+"|"+textChannel.getServer().getId()
+            log.info("Erreur lors de la récupération de l'actuel message de ticket... (s:"+textChannel.getServer().getName()+"|"+textChannel.getServer().getId()
                     +" c:"+textChannel.getId()+")");
             e.printStackTrace();
             return;
         } catch (NullPointerException | ExecutionException e) {
-            System.out.println("Le message de ticket actuel n'a pas pu être trouvé.");
+            log.info("Le message de ticket actuel n'a pas pu être trouvé.");
             e.printStackTrace();
         }
         ticketChannel.setMessageId(ticketChannel.getMessageJsonTicket().create(this.api).send(textChannel).join().getId());
@@ -64,11 +66,11 @@ public class TicketsLogicMessage {
         try {
             textChannel.getMessageById(ticketChannel.getMessageId()).get().delete();
         } catch (InterruptedException e) {
-            System.out.println("Erreur lors de la récupération de l'actuel message de ticket lors de sa suppression... (s:"+textChannel.getServer().getName()+"|"+textChannel.getServer().getId()
+            log.info("Erreur lors de la récupération de l'actuel message de ticket lors de sa suppression... (s:"+textChannel.getServer().getName()+"|"+textChannel.getServer().getId()
                     +" c:"+textChannel.getId()+")");
             e.printStackTrace();
         } catch (NullPointerException | ExecutionException e) {
-            System.out.println("Le message de ticket actuel n'a pas pu être trouvé pour le supprimé.");
+            log.info("Le message de ticket actuel n'a pas pu être trouvé pour le supprimé.");
             e.printStackTrace();
         }
     }

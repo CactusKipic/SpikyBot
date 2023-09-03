@@ -2,10 +2,11 @@ package fr.cactus_industries.tools.pdfreading;
 
 import fr.cactus_industries.database.interaction.service.PDFReadingService;
 import fr.cactus_industries.database.schema.table.TPDFReadingChannelEntity;
+import fr.cactus_industries.model.CommandHandler;
 import fr.cactus_industries.tools.Permissions;
 import fr.cactus_industries.tools.PremiumServers;
+import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.DiscordApi;
-import org.javacord.api.entity.channel.ChannelType;
 import org.javacord.api.entity.channel.ServerChannel;
 import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.message.Message;
@@ -21,9 +22,11 @@ import java.net.URL;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
-public class PDFSlashHandler {
+public class PDFSlashHandler extends CommandHandler {
     
+    public static final String COMMAND_NAME = "pdfreading";
     private final PDFReadingService pdfReadingService;
     private final PDFReactionListener pdfReactionListener;
     private final PDFMessageListener pdfMessageListener;
@@ -41,14 +44,7 @@ public class PDFSlashHandler {
     
     @PostConstruct
     public void init(){
-        /*PDFDB.getAllPDFReadingOnChannel().forEach((key, val) -> {
-            Server server = api.getServerById(key).get();
-            val.forEach(c ->{
-                ServerTextChannel channel = server.getTextChannelById(c).get();
-                channel.addReactionAddListener(pdfReactionListener);
-                channel.addMessageCreateListener(pdfMessageListener);
-            });
-        });*/
+        log.info("Init PdfReading");
         pdfReadingService.findAllChannel().stream().collect(Collectors.groupingBy(TPDFReadingChannelEntity::getServer)).forEach((serverId, channels) -> {
             Server server = api.getServerById(serverId).orElse(null);
             if(server != null) {
@@ -58,27 +54,25 @@ public class PDFSlashHandler {
                         textChannel.addMessageCreateListener(pdfMessageListener);
                     }, // Si le salon n'est pas trouvé, on le supprime de la BDD
                     () -> {
-                        System.out.println("Suppression du salon "+channel.getChannel()+" sur le serveur "+server.getName() + " ("+serverId+").");
+                        log.info("Suppression du salon "+channel.getChannel()+" sur le serveur "+server.getName() + " ("+serverId+").");
                         pdfReadingService.deleteChannel(channel);
                     });
                 });
             } else {
-                System.out.println("Could not find server with ID "+serverId+" for PDFReading initialisation.");
+                log.info("Could not find server with ID "+serverId+" for PDFReading initialisation.");
             }
         });
     }
     
-    public void handleCommand(SlashCommandInteraction command) {
+    public InteractionImmediateResponseBuilder handleCommand(SlashCommandInteraction command) {
         Optional<Server> optServer = command.getServer();
         InteractionImmediateResponseBuilder responder = command.createImmediateResponder();
         if (optServer.isEmpty()) {
-            responder.setContent("This command has to be used in a server.").respond();
-            return;
+            return responder.setContent("This command has to be used in a server.");
         }
         Server server = optServer.get();
         if (!Permissions.isAdmin(command.getUser(), server)) {
-            responder.setContent("You don't have permission to use this command.").respond();
-            return;
+            return responder.setContent("You don't have permission to use this command.");
         }
         SlashCommandInteractionOption baseCommand = command.getOptions().get(0);
         List<SlashCommandInteractionOption> options = baseCommand.getOptions();
@@ -87,12 +81,11 @@ public class PDFSlashHandler {
         if (options.get(0).getChannelValue().isPresent()) {
             ServerChannel channel = options.get(0).getChannelValue().get();
             if (!channel.getType().isTextChannelType()) {
-                responder.setContent("The given channel is not a text channel.").respond();
-                return;
+                return responder.setContent("The given channel is not a text channel.");
             }
             ServerTextChannel textChannel = channel.asServerTextChannel().get();
             String name = baseCommand.getName();
-            System.out.println(name);
+            log.info(name);
             switch (baseCommand.getName()){
                 case "add": {
                     //if(PDFDB.isChannelOnPDFReading(textChannel)){
@@ -107,8 +100,7 @@ public class PDFSlashHandler {
                             if (pdfReadingService.saveChannel(new TPDFReadingChannelEntity(textChannel)) != null) { // Ne peut pas être nul donc...
                                 responder.setContent("PDFReading successfully added to the channel.");
                             } else {
-                                responder.setContent("An unexpected error occurred. Try again later or warn the bot owner.");
-                                return;
+                                return responder.setContent("An unexpected error occurred. Try again later or warn the bot owner.");
                             }
                         }
                     }
@@ -131,7 +123,7 @@ public class PDFSlashHandler {
                         responder.setContent("This channel has no PDFReading on it.");
                         break;
                     }
-                    Long nb = baseCommand.getOptionLongValueByIndex(1).orElse(null);
+                    Long nb = baseCommand.getArgumentLongValueByIndex(1).orElse(null);
                     
                     if(nb != null && nb < 0) {
                         responder.setContent("SpikyBot cannot look into the future (Or I'd already be rich ! :money_mouth:).");
@@ -153,10 +145,12 @@ public class PDFSlashHandler {
                             responder.setContent("Only premium servers can add reaction under PDF for all anterior messages.");
                             break;
                         }
-                        responder.setContent("Starting to add reaction...\nThis may take a while, a message will be sent on this channel when complete.").respond();
-                        textChannel.getMessagesAsStream().forEach(PDFSlashHandler::addReactionOnStream);
-                        command.getChannel().get().sendMessage("Reactions successfully added on "+textChannel.getMentionTag()+".");
-                        return;
+                        Runnable addReactionOnMessage = () -> {
+                            textChannel.getMessagesAsStream().forEach(PDFSlashHandler::addReactionOnStream);
+                            command.getChannel().get().sendMessage("Reactions successfully added on "+textChannel.getMentionTag()+".");
+                        };
+                        addReactionOnMessage.run();
+                        return responder.setContent("Starting to add reaction...\nThis may take a while, a message will be sent on this channel when complete.");
                     }
                     
                     if(nb > 30) {
@@ -168,10 +162,12 @@ public class PDFSlashHandler {
                     Calendar cal = Calendar.getInstance();
                     cal.add(Calendar.DATE, (int) -nb);
                     long dateFrom = cal.getTimeInMillis();
-                    responder.setContent("Starting to add reaction...\nThis may take a while, a message will be sent on this channel when complete.").respond();
-                    textChannel.getMessagesAfterAsStream(dateFrom).forEach(PDFSlashHandler::addReactionOnStream);
-                    textChannel.sendMessage("Reactions successfully added on "+textChannel.getMentionTag()+" from the last "+nb+" days.");
-                    return;
+                    final Runnable addReactionOnMessage = () -> {
+                        textChannel.getMessagesAfterAsStream(dateFrom).forEach(PDFSlashHandler::addReactionOnStream);
+                        textChannel.sendMessage("Reactions successfully added on " + textChannel.getMentionTag() + " from the last " + nb + " days.");
+                    };
+                    addReactionOnMessage.run();
+                    return responder.setContent("Starting to add reaction...\nThis may take a while, a message will be sent on this channel when complete.");
                 }
                 case "grantlevel": {
                     //if(!PDFDB.isChannelOnPDFReading(textChannel)){
@@ -179,7 +175,7 @@ public class PDFSlashHandler {
                     if(pdfReadingChannel == null){
                         responder.setContent("There is no PDF reading on this channel.");
                     } else {
-                        Long level = baseCommand.getOptionLongValueByIndex(1).orElse(null);
+                        Long level = baseCommand.getArgumentLongValueByIndex(1).orElse(null);
                         if(level == null){
                             /*if (!PermissionsLevelsHandler.setPermLevelOnChannel(SBPermissionType.PDFReading, textChannel, 0)) {
                                 responder.setContent("Error while updating the grant time. Contact the developer if this error persist.");
@@ -208,7 +204,12 @@ public class PDFSlashHandler {
                     break;
             }
         }
-        responder.respond();
+        return responder;
+    }
+    
+    @Override
+    public String canHandle() {
+        return COMMAND_NAME;
     }
     
     private static void addReactionOnStream(Message m) {

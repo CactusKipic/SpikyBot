@@ -5,10 +5,13 @@ import java.io.FileOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import com.google.gson.Gson;
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.File;
 import java.util.Hashtable;
 import java.io.Serializable;
 
+@Slf4j
 public class ReactionStruct implements Serializable {
     
     private Hashtable<Integer, Hashtable<Long, Long>> reactionMessage;
@@ -56,7 +59,7 @@ public class ReactionStruct implements Serializable {
     }
     
     public static void save() {
-        System.out.println("Saving votes...");
+        log.info("Saving votes...");
         final Gson gson = new Gson();
         final File f = new File("./ReactionStruct.json");
         try {

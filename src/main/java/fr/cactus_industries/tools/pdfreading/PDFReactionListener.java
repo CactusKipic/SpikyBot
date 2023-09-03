@@ -1,21 +1,23 @@
 package fr.cactus_industries.tools.pdfreading;
 
 import fr.cactus_industries.database.interaction.service.PDFReadingService;
-import fr.cactus_industries.tools.permissionslevels.PermissionsLevelsHandler;
-import fr.cactus_industries.tools.permissionslevels.SBPermissionType;
+import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.entity.message.MessageAttachment;
 import org.javacord.api.entity.permission.Role;
 import org.javacord.api.entity.user.User;
 import org.javacord.api.event.message.reaction.ReactionAddEvent;
 import org.javacord.api.listener.message.reaction.ReactionAddListener;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class PDFReactionListener implements ReactionAddListener {
     
@@ -71,7 +73,7 @@ public class PDFReactionListener implements ReactionAddListener {
                                 e.printStackTrace();
                             }
                         } else
-                            System.out.println("User doesn't have permission to read PDF.");
+                            log.info("User doesn't have permission to read PDF.");
                     }
                 }
             }

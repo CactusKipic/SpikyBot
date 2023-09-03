@@ -7,11 +7,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
+@Slf4j
 public class Ressource {
     
     private String Title = null;
@@ -36,8 +39,8 @@ public class Ressource {
             } else if (title != null && this.Title == null) {
                 this.Title = title;
             }
-            System.out.println("Match");
-            System.out.println("Http: " + httpres + "\nTxt: " + txtres + "\nTitre: " + title);
+            log.info("Match");
+            log.info("Http: " + httpres + "\nTxt: " + txtres + "\nTitre: " + title);
         });
         if (this.Link != null) {
             try {
@@ -80,7 +83,7 @@ public class Ressource {
         MessageBuilder MB = new MessageBuilder();
         EmbedBuilder EB = new EmbedBuilder().setTitle("__**" + this.Title + "**__").setUrl(this.LinkList.get(0));
         String Description = this.TextList.stream().map(line -> "> " + line).reduce((str1, str2) -> str1 + "\n" + str2).get();
-        System.out.println("Desc\n" + Description + "\n");
+        log.info("Desc\n" + Description + "\n");
         if (this.LinkList.size() > 1) {
             Description = Description + "\n";
         }

@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.pdfbox.text.PDFTextStripperByArea;
@@ -13,6 +15,7 @@ import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.message.Messageable;
 import org.javacord.api.entity.user.User;
 
+@Slf4j
 public class PDFReading {
     
     public static void sendPDFTextTo(InputStream is, Messageable target) {
@@ -26,9 +29,9 @@ public class PDFReading {
                 textStripper.setParagraphStart(" ");
                 
                 if (target instanceof User) {
-                    System.out.println("PDF's text sent to " + ((User)target).getName());
+                    log.info("PDF's text sent to " + ((User)target).getName());
                 } else {
-                    System.out.println("PDF's text sent to a non user.");
+                    log.info("PDF's text sent to a non user.");
                 }
                 
                 //textStripper.setSortByPosition(true);
@@ -37,10 +40,10 @@ public class PDFReading {
                 for (String s : PDFReading.cutdownPDF(textStripper.getText(document))) {
                     new MessageBuilder().setContent(s).send(target).join();
                 }
-                System.out.println("Doc translation sent !");
+                log.info("Doc translation sent !");
                 document.close();
             } else {
-                System.out.println("ERROR ! Document is encrypted.");
+                log.info("ERROR ! Document is encrypted.");
             }
             is.close();
         }

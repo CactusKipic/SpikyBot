@@ -1,7 +1,8 @@
 package fr.cactus_industries.database.schema.table;
 
-import javax.persistence.Column;
-import javax.persistence.Id;
+import jakarta.persistence.Column;
+import jakarta.persistence.Id;
+
 import java.io.Serializable;
 import java.util.Objects;
 

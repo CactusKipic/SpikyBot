@@ -1,9 +1,8 @@
 package fr.cactus_industries.listeners;
 
-import fr.cactus_industries.commands.Commands;
 import fr.cactus_industries.database.interaction.service.ServerService;
 import fr.cactus_industries.database.schema.table.TGServerEntity;
-import org.javacord.api.DiscordApi;
+import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.server.Server;
@@ -16,6 +15,7 @@ import java.sql.Date;
 import java.util.Calendar;
 import java.util.Locale;
 
+@Slf4j
 @Service
 public class SpikyServerJoinListener implements ServerJoinListener {
     
@@ -28,7 +28,7 @@ public class SpikyServerJoinListener implements ServerJoinListener {
     @Override
     public void onServerJoin(ServerJoinEvent event) {
         Server server = event.getServer();
-        System.out.println("SpikyBot vient de rejoindre le serveur "+server.getName() + " ("+server.getId()+").");
+        log.info("SpikyBot vient de rejoindre le serveur "+server.getName() + " ("+server.getId()+").");
         
         // Ajout du serveur dans la BDD
         serverService.save(new TGServerEntity(server.getId(), new Date(Calendar.getInstance().getTime().getTime())));
@@ -58,6 +58,6 @@ public class SpikyServerJoinListener implements ServerJoinListener {
         );
         channelSTS.sendMessage(embedBuilder);
         // Ajout des permissions pour les commandes
-        Commands.setPermissionOnServer(server);
+        //Commands.setPermissionOnServer(server);
     }
 }

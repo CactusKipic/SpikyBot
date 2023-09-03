@@ -2,6 +2,7 @@ package fr.cactus_industries.tools;
 
 import java.awt.Color;
 
+import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.message.MessageBuilder;
@@ -11,6 +12,7 @@ import org.javacord.api.DiscordApi;
 import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
 
+@Slf4j
 public class TissSchedule extends TimerTask {
     
     private DiscordApi api;
@@ -25,10 +27,10 @@ public class TissSchedule extends TimerTask {
     
     @Override
     public void run() {
-        System.out.println("Message auto !!!");
+        log.info("Message auto !!!");
         Calendar calendar = Calendar.getInstance();
         String currentDay = "" + calendar.get(Calendar.DAY_OF_MONTH);
-        System.out.println("Jour: " + currentDay + "Name: " + Tisstober.getConfigString("header"));
+        log.info("Jour: " + currentDay + "Name: " + Tisstober.getConfigString("header"));
         CompletableFuture<Message> send = new MessageBuilder().setEmbed(new EmbedBuilder().setColor(new Color(16219996))
                 .setTitle("**Jour " + currentDay + "**")
                 .setUrl(Tisstober.getConfigString("annoncelink"))

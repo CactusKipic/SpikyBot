@@ -1,10 +1,9 @@
 package fr.cactus_industries.tools;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
 import fr.cactus_industries.tools.tickets.MessageJsonTicket;
-
-import javax.persistence.AttributeConverter;
-import javax.persistence.Converter;
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 
 @Converter
 public class MessageJsonTicketDeserializationType implements AttributeConverter<MessageJsonTicket, String> {

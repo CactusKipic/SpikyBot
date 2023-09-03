@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutionException;
 import fr.cactus_industries.tools.Tisstober;
 import java.io.IOException;
 import fr.cactus_industries.tools.pdfreading.PDFReading;
+import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.entity.message.MessageAttachment;
 import org.javacord.api.entity.message.Message;
 import java.util.Date;
@@ -20,6 +21,7 @@ import java.util.HashMap;
 import org.javacord.api.listener.message.reaction.ReactionAddListener;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 public class ReactionManager {
     @Service
     public static class ReactionAdded implements ReactionAddListener {
@@ -57,7 +59,7 @@ public class ReactionManager {
                             if (fileUrl.getPath().toLowerCase().endsWith(".pdf")) {
                                 try {
                                     PDFReading.sendPDFTextTo(fileUrl.openStream(), event.requestUser().join());
-                                    System.out.println("Doc translation sent !");
+                                    log.info("Doc translation sent !");
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
@@ -66,7 +68,7 @@ public class ReactionManager {
                     }
                 }
                 else if (chID == (Long) Tisstober.getConfig().get("chanID")) {
-                    System.out.println("Reaction Tisstober");
+                    log.info("Reaction Tisstober");
                     if (!event.getUser().get().isBot() && event.requestReaction().join().get().getEmoji().equalsEmoji("\ud83d\udc96")) {
                         Message message = null;
                         try {

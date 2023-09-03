@@ -26,11 +26,11 @@ public class SpikyRoleChangePermissionListener implements RoleChangePermissionsL
         Collection<PermissionType> oldAllowedPermission = event.getNewPermissions().getAllowedPermission();
         // Le rôle a reçu la permission d'Administrateur
         if (allowedPermission.contains(PermissionType.ADMINISTRATOR) && !oldAllowedPermission.contains(PermissionType.ADMINISTRATOR)) {
-            Commands.updatePermissionOfRole(event.getRole(), true);
+            //Commands.updatePermissionOfRole(event.getRole(), true);
         }
         // Le rôle a perdu la permission d'Administrateur
         if (oldAllowedPermission.contains(PermissionType.ADMINISTRATOR) && !allowedPermission.contains(PermissionType.ADMINISTRATOR)) {
-            Commands.updatePermissionOfRole(event.getRole(), false);
+            //Commands.updatePermissionOfRole(event.getRole(), false);
         }
     }
 }

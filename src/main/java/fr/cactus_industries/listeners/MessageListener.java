@@ -13,6 +13,7 @@ import java.util.concurrent.CompletionException;
 import fr.cactus_industries.tools.messagesaving.MessageJsonTool;
 import java.util.NoSuchElementException;
 
+import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.ServerTextChannel;
 
@@ -37,6 +38,7 @@ import java.util.Arrays;
 import org.javacord.api.event.message.MessageCreateEvent;
 import org.javacord.api.listener.message.MessageCreateListener;
 
+@Slf4j
 public class MessageListener implements MessageCreateListener {
     
     private final String prefix;
@@ -53,10 +55,10 @@ public class MessageListener implements MessageCreateListener {
         String message = event.getMessageContent();
         
         if (message.startsWith(this.prefix)) {
-            System.out.println("It's a command");
+            log.info("It's a command");
             message = message.substring(this.pl);
             String[] args = message.split(" +", 7); // Séparation des éléments de la commande jusqu'à 7
-            System.out.println(args.length + ":" + args[0]);
+            log.info(args.length + ":" + args[0]);
             Arrays.stream(args).forEach(System.out::println);
             switch (args[0]) {
                 /* ------------------------- /*
@@ -78,7 +80,7 @@ public class MessageListener implements MessageCreateListener {
                         break;
                     }
                     if (args.length > 2) {
-                        System.out.println("Message: " + message);
+                        log.info("Message: " + message);
                         TextChannel tchan = event.getApi().getTextChannelById(Long.parseLong(args[1])).get();
                         Matcher i = Pattern.compile("^.*? \\d* (.*)$").matcher(message);
                         if (i.find()) {
@@ -90,20 +92,20 @@ public class MessageListener implements MessageCreateListener {
                 case "tisstober": {
                     if (!Permissions.isAdmin(event.getMessageAuthor()))
                         break;
-    
-                    System.out.println("Tisstober");
+                    
+                    log.info("Tisstober");
                     if (args.length >= 2) {
                         switch (args[1]) {
                             case "force":
-                                System.out.println("Forceday");
+                                log.info("Forceday");
                                 Tisstober.FireTask();
                                 break;
                             case "forcehere":
-                                System.out.println("Forcehere");
+                                log.info("Forcehere");
                                 Tisstober.FakeTask(event.getChannel(), true);
                                 break;
                             case "testday":
-                                System.out.println("Testday");
+                                log.info("Testday");
                                 Tisstober.FakeTask(event.getChannel(), false);
                                 break;
                             case "reload":
@@ -145,7 +147,7 @@ public class MessageListener implements MessageCreateListener {
                                 }
                                 break;
                             case "pdf":
-                                System.out.println("PDF !");
+                                log.info("PDF !");
                                 List<MessageAttachment> MAL;
                                 if (args.length > 2) {
                                     MAL = event.getChannel().getMessageById(Long.parseLong(args[2])).join().getAttachments();
@@ -156,11 +158,11 @@ public class MessageListener implements MessageCreateListener {
                                     break;
                                 }
                                 URL fileUrl = MAL.get(0).getUrl();
-                                System.out.println((MAL.get(0)).getUrl().getPath() + "\nFile: " + (MAL.get(0)).getUrl().getFile());
+                                log.info((MAL.get(0)).getUrl().getPath() + "\nFile: " + (MAL.get(0)).getUrl().getFile());
                                 if (fileUrl.getPath().endsWith(".pdf")) {
                                     try {
                                         PDFReading.sendPDFTextTo(fileUrl.openStream(), event.getChannel());
-                                        System.out.println("Doc translation sent !");
+                                        log.info("Doc translation sent !");
                                     } catch (IOException e) {
                                         e.printStackTrace();
                                     }
@@ -175,10 +177,10 @@ public class MessageListener implements MessageCreateListener {
                     if (!Permissions.isAdmin(event.getMessageAuthor())) {
                         break;
                     }
-                    System.out.println("Get message " + args.length);
+                    log.info("Get message " + args.length);
                     if (args.length >= 2) {
                         long mID = Long.parseLong(args[1]);
-                        System.out.println("id " + mID);
+                        log.info("id " + mID);
                         Message mess = null;
                         try {
                             mess = event.getChannel().getMessageById(mID).get();
@@ -255,7 +257,7 @@ public class MessageListener implements MessageCreateListener {
                         break;
                     }
                     MessageJsonTool messTool = new MessageJsonTool();
-                    System.out.println("Message type is " + args[2]);
+                    log.info("Message type is " + args[2]);
                     // TODO Refaire la création de ticket avec commande #CDégueulasse (mais c'était pratique sur le coup, faut reconnaître)
                     switch (args[2]) {
                         case "embed": {
@@ -273,7 +275,7 @@ public class MessageListener implements MessageCreateListener {
                                 Color color = null;
                                 String imageLink = null;
                                 if (args.length >= 5) {
-                                    System.out.println("1 option " + args[4]);
+                                    log.info("1 option " + args[4]);
                                     if (args[4].matches("^#?[0-9A-Fa-f]{6}$")) {
                                         messTool.setEmbColor(args[4]);
                                     }
@@ -282,9 +284,9 @@ public class MessageListener implements MessageCreateListener {
                                     }
                                 }
                                 if (args.length >= 6) {
-                                    System.out.println("2 options " + args[5]);
+                                    log.info("2 options " + args[5]);
                                     if (args[5].matches("^#?[0-9A-Fa-f]{6}$")) {
-                                        System.out.println("Couleur");
+                                        log.info("Couleur");
                                         messTool.setEmbColor(args[5]);
                                     }
                                     else if (args[5].matches("(?i)^https?://.*\\.(png|jpg|gif)$")) {
@@ -380,11 +382,11 @@ public class MessageListener implements MessageCreateListener {
                         break;
                     }
                     if (ConfigSpiky.init()) {
-                        System.out.println("Config reloaded.");
+                        log.info("Config reloaded.");
                         new MessageBuilder().setContent("Config reloaded.").send(event.getChannel());
                         break;
                     }
-                    System.out.println("Error while reloading config.");
+                    log.info("Error while reloading config.");
                     new MessageBuilder().setContent("Error while reloading config.").send(event.getChannel());
                     break;
                 }
@@ -395,7 +397,7 @@ public class MessageListener implements MessageCreateListener {
                     if (!Permissions.isOwner(event.getMessageAuthor())) {
                         break;
                     }
-                    if (event.getApi().getOwnerId() == event.getMessageAuthor().getId()) {
+                    if (event.getApi().getOwnerId().get() == event.getMessageAuthor().getId()) {
                         Main.Disconnect(event.getApi());
                         break;
                     }

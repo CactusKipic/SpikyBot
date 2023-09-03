@@ -1,11 +1,13 @@
 package fr.cactus_industries.tools.pdfreading;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.pdfbox.text.TextPosition;
 
 import java.io.IOException;
 import java.util.Locale;
 
+@Slf4j
 public class PDFCustomTextStripper extends PDFTextStripper {
     public PDFCustomTextStripper() throws IOException {
         super();
@@ -18,17 +20,17 @@ public class PDFCustomTextStripper extends PDFTextStripper {
     
     @Override
     protected void processTextPosition(TextPosition text) {
-        System.out.println(text.getUnicode());
+        log.info(text.getUnicode());
         
         // TODO Passer Bold et Italic en statique, passer à true quand vrai et placer le tag avant puis dès que faux placer encore le tag
         // TODO Idéalement mettre la fin de l'italique et bold si le caractère est en fin de ligne
         boolean bold, italic;
         bold = (text.getFont().getFontDescriptor().getFontWeight() >= 650); // Is bold ?
         String fontName = text.getFont().getFontDescriptor().getFontName();
-        System.out.println(fontName);
+        log.info(fontName);
         italic = fontName.toLowerCase(Locale.ROOT).contains("italic");
         if(text.getUnicode().equals("\n"))
-            System.out.println("C'est un retour");
+            log.info("C'est un retour");
         String textStr = text.getUnicode().replaceAll(".{0}(?=[_*`]|~~|\\|\\|)","\\\\");
         
         // Utilisation de tag pour définir les débuts et fin de formatage du texte, qui devra ensuite être process en sortie,
@@ -38,26 +40,26 @@ public class PDFCustomTextStripper extends PDFTextStripper {
         if(bold) {
             if(!sBold){
                 // TODO add balise
-                System.out.println("Début bold");
+                log.info("Début bold");
                 sBold = true;
             }
         } else {
             if(sBold){
                 // TODO add fin balise
-                System.out.println("Fin bold");
+                log.info("Fin bold");
                 sBold = false;
             }
         }
         if(italic) {
             if(!sItalic){
                 // TODO add balise
-                System.out.println("Début italique");
+                log.info("Début italique");
                 sItalic = true;
             }
         } else {
             if(sItalic){
                 // TODO add fin balise
-                System.out.println("Fin italique");
+                log.info("Fin italique");
                 sItalic = false;
             }
         }
@@ -69,7 +71,7 @@ public class PDFCustomTextStripper extends PDFTextStripper {
                 text.getWidthOfSpace(), textStr, text.getCharacterCodes(), text.getFont(),
                 text.getFontSize(), (int) text.getFontSizeInPt()));
         else {
-            System.out.println("Pas changé");
+            log.info("Pas changé");
             super.processTextPosition(text);
         }
             

@@ -1,7 +1,9 @@
 package fr.cactus_industries.commands;
 
 import fr.cactus_industries.Main;
+import fr.cactus_industries.model.CommandHandler;
 import fr.cactus_industries.tools.Permissions;
+import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.server.Server;
@@ -16,18 +18,24 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Service
-public class GeneralSlashHandler {
+public class GeneralSlashHandler extends CommandHandler {
     
-    public void handleCommand(SlashCommandInteraction command) {
+    public static final String COMMAND_NAME = "spiky";
+    
+    public void init() {
+        // Rien à faire ici
+    }
+    
+    public InteractionImmediateResponseBuilder handleCommand(SlashCommandInteraction command) {
         Optional<Server> optServer = command.getServer();
         InteractionImmediateResponseBuilder responder = command.createImmediateResponder();
         if (optServer.isEmpty()) {
-            responder.setContent("This command has to be used in a server.").respond();
-            return;
+            return responder.setContent("This command has to be used in a server.");
         }
         Server server = optServer.get();
-        SlashCommandInteractionOption baseCommand = command.getFirstOption().get();
+        SlashCommandInteractionOption baseCommand = command.getArgumentByIndex(0).get();
         List<SlashCommandInteractionOption> options = baseCommand.getOptions();
     
         switch (baseCommand.getName()) {
@@ -51,8 +59,7 @@ public class GeneralSlashHandler {
              */
             default:
                 if (!Permissions.isAdmin(command.getUser(), server)) {
-                    responder.setContent("You don't have permission to use this command.").respond();
-                    return;
+                    return responder.setContent("You don't have permission to use this command.");
                 }
                 switch (baseCommand.getName()) {
                     case "":
@@ -60,13 +67,11 @@ public class GeneralSlashHandler {
                         break;
                     case "admin":
                         if(!command.getUser().isBotOwner()){
-                            responder.setContent("You don't have permission to use this command.").respond();
-                            return;
+                            return responder.setContent("You don't have permission to use this command.");
                         }
-                        Optional<String> rootCommand = baseCommand.getFirstOptionStringValue();
+                        Optional<String> rootCommand = baseCommand.getStringValue();
                         if (rootCommand.isEmpty()) {
-                            responder.setContent("Il n'y a pas de commande. Est-ce une blague que je suis trop robot pour comprendre ?").respond();
-                            return;
+                            return responder.setContent("Il n'y a pas de commande. Est-ce une blague que je suis trop robot pour comprendre ?");
                         }
                         switch (rootCommand.get()) {
                             case "test":
@@ -78,7 +83,7 @@ public class GeneralSlashHandler {
                                 }
                                 InteractionFollowupMessageBuilder followupMessageBuilder = command.createFollowupMessageBuilder();
                                 followupMessageBuilder.setContent("Et là je répond plus tard ! Dingue, nan ?!").send();
-                                System.out.println("Le followup est lancé.");
+                                log.info("Le followup est lancé.");
                                 break;
                             case "shutdown":
                                 Main.Disconnect(command.getApi());
@@ -95,6 +100,11 @@ public class GeneralSlashHandler {
                 break;
         }
         
-        responder.respond();
+        return responder;
+    }
+    
+    @Override
+    public String canHandle() {
+        return COMMAND_NAME;
     }
 }

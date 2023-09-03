@@ -2,6 +2,7 @@ package fr.cactus_industries.tools.tickets;
 
 import fr.cactus_industries.database.interaction.service.TicketService;
 import fr.cactus_industries.database.schema.table.TTicketChannelEntity;
+import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.user.User;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.Timer;
 import java.util.TimerTask;
 
+@Slf4j
 @Service
 public class TicketsButtonListener implements ButtonClickListener {
     
@@ -66,7 +68,7 @@ public class TicketsButtonListener implements ButtonClickListener {
         try {
             timer.schedule(new RemoveReact(message, resEmoji), 2500);
         } catch (IllegalStateException e) {
-            System.out.println("Le timer du bouton est mort, vive le timer du bouton.");
+            log.info("Le timer du bouton est mort, vive le timer du bouton.");
             timer = new Timer();
             timer.schedule(new RemoveReact(message, resEmoji), 2500);
         }
@@ -83,9 +85,9 @@ public class TicketsButtonListener implements ButtonClickListener {
         
         @Override
         public void run() {
-            System.out.println("Retrait émoji ticket");
+            log.info("Retrait émoji ticket");
             message.removeOwnReactionByEmoji(emoji).join();
-            System.out.println("Fait !");
+            log.info("Fait !");
         }
     }
 }

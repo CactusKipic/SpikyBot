@@ -1,25 +1,19 @@
 package fr.cactus_industries;
 
-import fr.cactus_industries.commands.Commands;
-import fr.cactus_industries.commands.SlashCommandListener;
-import fr.cactus_industries.listeners.*;
 import fr.cactus_industries.tisseurs.BumperListener;
-import fr.cactus_industries.tools.Tisstober;
-import fr.cactus_industries.tools.pdfreading.PDFCommandHandler;
-import fr.cactus_industries.tools.pdfreading.PDFSlashHandler;
-import fr.cactus_industries.tools.tickets.TicketsPermissionManager;
+import fr.cactus_industries.tools.ConfigSpiky;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.DiscordApi;
-import fr.cactus_industries.tools.ConfigSpiky;
+import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.intent.Intent;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageBuilder;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 //@SpringBootApplication

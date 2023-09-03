@@ -5,6 +5,7 @@ import fr.cactus_industries.listeners.*;
 import fr.cactus_industries.tisseurs.BumperListener;
 import fr.cactus_industries.tools.ConfigSpiky;
 import fr.cactus_industries.tools.Tisstober;
+import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.javacord.api.entity.channel.ServerTextChannel;
@@ -19,36 +20,39 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Configuration
 public class JavacordLauncher {
     
     static HashMap<Long, Long> newUserMemory = new HashMap<>(); // User, Time
     
-    private DiscordApi api;
     
-    public JavacordLauncher(SpikyServerJoinListener spikyServerJoinListener, SpikyRoleChangePermissionListener spikyRoleChangePermissionListener,
+    public JavacordLauncher(DiscordApi api,
+                            SpikyServerJoinListener spikyServerJoinListener, SpikyRoleChangePermissionListener spikyRoleChangePermissionListener,
                             SpikyOwnerChangeListener spikyOwnerChangeListener, ReactionManager.ReactionAdded reactionAdded) {
-        System.out.println("Lancement du bot...");
+        log.info("[Startup] Lancement du bot...");
         
         // Initialisation config locale
         if (!ConfigSpiky.init()) {
-            System.out.println("Could not load config.yml file (from resource and/or local).");
+            log.error("Could not load config.yml file (from resource and/or local).");
             return;
         }
         // Récupération du token depuis la config locale
         String token = ConfigSpiky.getConfigString("bot-token");
-        if (token.equals("")) {
-            System.out.println("Bot token is empty, add a correct token to start the bot in the config.yml.");
+        if (token.isEmpty()) {
+            log.error("Bot token is empty, add a correct token to start the bot in the config.yml.");
             return;
         }
         // Définition du préfixe des commandes
         String prefix = ConfigSpiky.getConfigString("command-prefix");
-        if (prefix.length() == 0) {
-            System.out.println("Prefix is null, setting default prefix '!'.");
+        if (prefix.isEmpty()) {
+            log.info("Prefix is null, setting default prefix '!'.");
             prefix = "!";
         }
         // Connexion
-        api = new DiscordApiBuilder().setToken(token).setAllIntentsExcept(Intent.GUILD_PRESENCES).login().join();
+        //log.info("Connexion...");
+        //api = new DiscordApiBuilder().setToken(token).setAllIntentsExcept(Intent.GUILD_PRESENCES).login().join();
+        //log.info("Application ID : [{}]",api.getClientId());
         
         // TODO update
         // Ajout des listeners de mise à jour (server join, server leave, modif role)
@@ -64,7 +68,7 @@ public class JavacordLauncher {
         Tisstober.Initiate(api);
     
         // Ajout des commandes
-        Commands.addCommands(api);
+        //Commands.addCommands(api);
         // Hardcode pour les Tisseurs
         {
             // Ajout du listener pour le !d bump scoreboard
@@ -93,22 +97,17 @@ public class JavacordLauncher {
                 newUserMemory = new HashMap<>(newUserMemory.entrySet().stream().filter(e -> e.getValue() + 300_000 > curTime)
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
                 if(newUserMemory.containsKey(userId)){
-                    System.out.println("Ca faisait moins de 5 minutes.");
+                    log.info("Ca faisait moins de 5 minutes.");
                     newUserMemory.remove(userId);
                     event.getServer().getTextChannelById(580774929767596043L).get()
                             .sendMessage("https://tenor.com/view/in-and-out-in-out-the-simpsons-simpsons-gif-21378859");
                 } else
-                    System.out.println("Ca faisait plus de 5 minutes.");
+                    log.info("Ca faisait plus de 5 minutes.");
             });
         }
     
-        System.out.println("Bot invite link: " + api.createBotInvite());
+        log.info("Bot invite link: " + api.createBotInvite());
         
-        System.out.println("Le bot est prêt à piquer des culs !!!");
-    }
-    
-    @Bean
-    public DiscordApi getApi() {
-        return api;
+        log.info("[Startup] Le bot est prêt à piquer des culs !!!");
     }
 }

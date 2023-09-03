@@ -15,7 +15,7 @@ import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
 public class Commands {
-    
+    /*
     public static List<ApplicationCommand> commands = new ArrayList<>();
     public static long ownerID = 0L;
     
@@ -117,14 +117,14 @@ public class Commands {
             
             commands.forEach(s -> System.out.println(s.getName()));
             
-            /* Pour test
+            *//* Pour test
             api.getServerById(739254091154456628L).get()
-            * */
-            /* - - - - - - - - - -
+            * *//*
+            *//* - - - - - - - - - -
             *
             * Permission des commandes
             *
-            - - - - - - - - - - */
+            - - - - - - - - - - *//*
             ownerID = api.getOwnerId();
             api.getServers().forEach(Commands::setPermissionOnServer);
             
@@ -198,5 +198,5 @@ public class Commands {
                 return command;
         }
         return null;
-    }
+    }*/
 }

@@ -3,6 +3,7 @@ package fr.cactus_industries.tools.tickets;
 import fr.cactus_industries.database.interaction.service.TicketService;
 import fr.cactus_industries.database.schema.table.TTicketChannelEntity;
 import fr.cactus_industries.database.schema.table.TTicketGrantedEntity;
+import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.channel.ServerTextChannelUpdater;
@@ -18,6 +19,7 @@ import java.util.*;
 import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class TicketsLogicPermission {
     
@@ -45,13 +47,13 @@ public class TicketsLogicPermission {
         serverChannelEnded.forEach((serveur, channelEnded) -> {
             final Server server = api.getServerById(serveur).orElse(null);
             if(server == null) {
-                System.out.println("Le serveur "+serveur+" n'a pas été trouvé. Impossible de résumer les permissions de tickets.");
+                log.info("Le serveur "+serveur+" n'a pas été trouvé. Impossible de résumer les permissions de tickets.");
                 return;
             }
             channelEnded.forEach((channel, ended) -> {
                 final ServerTextChannel textChannel = server.getTextChannelById(channel).orElse(null);
                 if(textChannel == null) {
-                    System.out.println("Le salon "+channel+" sur le serveur "+server.getName()+" ("+serveur+") n'a pas été trouvé. Impossible de résumer les permissions de tickets.");
+                    log.info("Le salon "+channel+" sur le serveur "+server.getName()+" ("+serveur+") n'a pas été trouvé. Impossible de résumer les permissions de tickets.");
                     return;
                 }
                 // Permission terminée
@@ -106,7 +108,7 @@ public class TicketsLogicPermission {
             updater.addPermissionOverwrite(user, new PermissionsBuilder().setAllowed(new PermissionType[]{PermissionType.SEND_MESSAGES}).build());
             updater.update().join();
         } catch (CompletionException e) {
-            System.out.println("Could not set write permission for "+user.getName()+" on channel "+textChannel.getId()
+            log.info("Could not set write permission for "+user.getName()+" on channel "+textChannel.getId()
                     +" server "+textChannel.getServer().getName()+" ("+textChannel.getServer().getId()+").");
             e.printStackTrace();
             // Erreur : :x:
@@ -122,7 +124,7 @@ public class TicketsLogicPermission {
             updater.addPermissionOverwrite(user, new PermissionsBuilder().setUnset(new PermissionType[]{PermissionType.SEND_MESSAGES}).build());
             updater.update().join();
         } catch (CompletionException e) {
-            System.out.println("Could not unset write permission for "+user.getName()+" on channel "+textChannel.getId()
+            log.info("Could not unset write permission for "+user.getName()+" on channel "+textChannel.getId()
                     +" server "+textChannel.getServer().getName()+" ("+textChannel.getServer().getId()+").");
             e.printStackTrace();
             // Erreur : :x:

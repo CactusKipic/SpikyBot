@@ -1,5 +1,6 @@
 package fr.cactus_industries.tisseurs;
 
+import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.message.embed.Embed;
@@ -13,6 +14,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@Slf4j
 public class BumperListener implements MessageCreateListener {
     
     private static SimpleDateFormat SDF = new SimpleDateFormat("MM/yy");
@@ -20,21 +22,21 @@ public class BumperListener implements MessageCreateListener {
     @Override
     public void onMessageCreate(MessageCreateEvent event) {
         if(event.getMessageAuthor().isBotUser()){
-            System.out.println("C'est un bot");
+            log.info("C'est un bot");
             // Est-ce que c'est Tissrobot ?
             if(event.getMessageAuthor().getId() == 302050872383242240L){
-                System.out.println("C'est Tissrobot");
+                log.info("C'est Tissrobot");
                 List<Embed> embeds = event.getMessage().getEmbeds();
                 if(embeds.size() > 0) {
-                    System.out.println("Y'a un embed");
+                    log.info("Y'a un embed");
                     if(embeds.get(0).getDescription().isPresent()) {
-                        System.out.println("Y'a une desc");
+                        log.info("Y'a une desc");
                         String str = embeds.get(0).getDescription().get();
                         Pattern pattern = Pattern.compile("<@!?([0-9]*)>");
                         Calendar cal = Calendar.getInstance();
                         // System.out.println(str);
                         if(str.matches("(?s)<@!?[0-9]*>.*? :thumbsup:.*?https://disboard.org/.*")){
-                            System.out.println("Ca bump");
+                            log.info("Ca bump");
                             long id = Long.parseLong(str.substring(str.indexOf('@') + 1, str.indexOf('>')));
                             BumperDB.addPointsTo(id, cal, 1);
                             //TODO Ajout d'un point
@@ -42,14 +44,14 @@ public class BumperListener implements MessageCreateListener {
                                 .send(event.getChannel());
                         }
                         if(str.matches("<@!?[0-9]*>.*? [0-9]{1,3} .*")){
-                            System.out.println("Ca bump mal");
+                            log.info("Ca bump mal");
                             long id = Long.parseLong(str.substring(str.indexOf('@') + 1, str.indexOf('>')));
                             BumperDB.addPointsTo(id, cal, -0.25);
                             //TODO Retrait de point
                             new MessageBuilder().setEmbed(getScoreboardEmbed(event.getApi(), cal))
                                     .send(event.getChannel());
                         }
-                        System.out.println("Fin");
+                        log.info("Fin");
                     }
                 }
             }

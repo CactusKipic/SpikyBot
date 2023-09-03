@@ -1,13 +1,15 @@
 package fr.cactus_industries;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+@Slf4j
 @SpringBootApplication
 public class Launcher {
     
     public static void main(String[] args) {
-        System.out.println("Lancement Spring...");
+        log.info("Lancement Spring...");
         SpringApplication.run(Launcher.class, args);
     }
     

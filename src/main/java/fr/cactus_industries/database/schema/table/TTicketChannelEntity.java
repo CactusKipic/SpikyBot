@@ -1,12 +1,9 @@
 package fr.cactus_industries.database.schema.table;
 
-import com.vladmihalcea.hibernate.type.json.JsonType;
 import fr.cactus_industries.tools.MessageJsonTicketDeserializationType;
 import fr.cactus_industries.tools.tickets.MessageJsonTicket;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
+import jakarta.persistence.*;
 
-import javax.persistence.*;
 import java.util.Objects;
 
 @Entity

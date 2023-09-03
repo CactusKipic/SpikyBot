@@ -3,6 +3,7 @@ package fr.cactus_industries.tools.tickets;
 import fr.cactus_industries.database.interaction.service.TicketService;
 import fr.cactus_industries.database.schema.table.TTicketChannelEntity;
 import fr.cactus_industries.tools.PremiumServers;
+import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.server.Server;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class TicketsLogicDatabase {
     
@@ -41,12 +43,12 @@ public class TicketsLogicDatabase {
                 .forEach((serverId, listTicketChannel) -> {
                     final Server server = api.getServerById(serverId).orElse(null);
                     if(server == null){ // Serveur pas trouvé (inexistant ou erreur API ?)
-                        System.out.println("Le serveur ID:"+serverId+" n'a pas pu être trouvé, existe-t-il encore ?");
+                        log.info("Le serveur ID:"+serverId+" n'a pas pu être trouvé, existe-t-il encore ?");
                     } else {
                         listTicketChannel.forEach(TC -> {
                             final ServerTextChannel textChannel = server.getTextChannelById(TC.getChannel()).orElse(null);
                             if(textChannel == null) { // Salon pas trouvé (supprimé ou erreur API ?)
-                                System.out.println("Le salon "+TC.getChannel()+" du serveur "+server.getName() +" ("+serverId+") n'a pas été trouvé.");
+                                log.info("Le salon "+TC.getChannel()+" du serveur "+server.getName() +" ("+serverId+") n'a pas été trouvé.");
                                 // TODO Supprimer ?
                             } else {
                                 addListeners(textChannel);

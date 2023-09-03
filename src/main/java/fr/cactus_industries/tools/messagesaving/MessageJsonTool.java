@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
+import fr.cactus_industries.tools.CustomColor;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.emoji.KnownCustomEmoji;
 import org.javacord.api.entity.message.MessageBuilder;
@@ -15,6 +18,8 @@ import org.javacord.api.entity.message.component.ButtonStyle;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.user.User;
 
+@Getter
+@Slf4j
 public class MessageJsonTool implements Serializable {
     
     private String content = null;
@@ -24,7 +29,7 @@ public class MessageJsonTool implements Serializable {
     private String embTitle = null;
     private String embDesc = null;
     private String embLink = null;
-    private Color embColor = null;
+    private CustomColor embColor = null;
     private String embImage = null;
     private Long embAuthor = null;
     private String embFooter = null;
@@ -38,7 +43,7 @@ public class MessageJsonTool implements Serializable {
     }
     
     public MessageJsonTool(String content, Boolean tts, boolean embed, String embTitle, String embDesc, String embLink,
-                           Color embColor, String embImage, Long embAuthor, String embFooter, String embFootImg,
+                           CustomColor embColor, String embImage, Long embAuthor, String embFooter, String embFootImg,
                            String embThumb, Boolean embTStamp, ArrayList<ButtonJson> buttonList) {
         this.content = content;
         this.tts = tts;
@@ -56,48 +61,24 @@ public class MessageJsonTool implements Serializable {
         this.buttonList = buttonList;
     }
     
-    public ArrayList<ButtonJson> getButtonList(){
-        return buttonList;
-    }
-    
     public void setButtonList(ArrayList<ButtonJson> buttonList) {
         this.buttonList = buttonList;
-    }
-    
-    public String getContent() {
-        return content;
     }
     
     public void setContent(String content) {
         this.content = content;
     }
     
-    public Boolean getTts() {
-        return tts;
-    }
-    
     public void setTts(Boolean tts) {
         this.tts = tts;
-    }
-    
-    public String getEmbTitle() {
-        return embTitle;
     }
     
     public void setEmbTitle(String embTitle) {
         this.embTitle = embTitle;
     }
     
-    public String getEmbDesc() {
-        return embDesc;
-    }
-    
     public boolean setEmbed() {
         return this.embed;
-    }
-    
-    public boolean isEmbed() {
-        return embed;
     }
     
     public void setEmbed(boolean embed) {
@@ -126,16 +107,8 @@ public class MessageJsonTool implements Serializable {
         this.embDesc = embDesc;
     }
     
-    public String getEmbLink() {
-        return embLink;
-    }
-    
     public void setEmbLink(String embLink) {
         this.embLink = embLink;
-    }
-    
-    public Color getEmbColor() {
-        return embColor;
     }
     
     public boolean setEmbColor(String hexColor) {
@@ -148,7 +121,7 @@ public class MessageJsonTool implements Serializable {
         }
         try {
             if ((hexColor).matches("^#[0-9A-Fa-f]{6}$")) {
-                this.embColor = Color.decode(hexColor);
+                this.embColor = CustomColor.fromColor(Color.decode(hexColor));
             }
             return true;
         }
@@ -157,52 +130,28 @@ public class MessageJsonTool implements Serializable {
         }
     }
     
-    public void setEmbColor(Color embColor) {
+    public void setEmbColor(CustomColor embColor) {
         this.embColor = embColor;
-    }
-    
-    public String getEmbImage() {
-        return embImage;
     }
     
     public void setEmbImage(String embImage) {
         this.embImage = embImage;
     }
     
-    public Long getEmbAuthor() {
-        return embAuthor;
-    }
-    
     public void setEmbAuthor(Long embAuthor) {
         this.embAuthor = embAuthor;
-    }
-    
-    public String getEmbFooter() {
-        return embFooter;
     }
     
     public void setEmbFooter(String embFooter) {
         this.embFooter = embFooter;
     }
     
-    public String getEmbFootImg() {
-        return embFootImg;
-    }
-    
     public void setEmbFootImg(String embFootImg) {
         this.embFootImg = embFootImg;
     }
     
-    public String getEmbThumb() {
-        return embThumb;
-    }
-    
     public void setEmbThumb(String embThumb) {
         this.embThumb = embThumb;
-    }
-    
-    public Boolean getEmbTStamp() {
-        return embTStamp;
     }
     
     public void setEmbTStamp(Boolean embTStamp) {
@@ -228,7 +177,7 @@ public class MessageJsonTool implements Serializable {
             if (this.embLink != null)
                 eB.setUrl(this.embLink);
             if (this.embColor != null)
-                eB.setColor(this.embColor);
+                eB.setColor(this.embColor.toColor());
             if (this.embImage != null)
                 eB.setImage(this.embImage);
             if (this.embAuthor != null)
@@ -237,7 +186,7 @@ public class MessageJsonTool implements Serializable {
                     eB.setAuthor(user);
                 }
                 catch (NoSuchElementException e) {
-                    System.out.println("User not found while creating an embed.");
+                    log.info("User not found while creating an embed.");
                 }
             
             if (this.embFooter != null) {

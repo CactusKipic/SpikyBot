@@ -3,15 +3,14 @@ package fr.cactus_industries.tools.tickets;
 import com.vdurmont.emoji.EmojiManager;
 import fr.cactus_industries.database.interaction.service.TicketService;
 import fr.cactus_industries.database.schema.table.TTicketChannelEntity;
+import fr.cactus_industries.model.CommandHandler;
 import fr.cactus_industries.tools.Permissions;
 import fr.cactus_industries.tools.messagesaving.MessageJsonTool;
 import fr.cactus_industries.tools.permissionslevels.PermissionsLevelsHandler;
 import fr.cactus_industries.tools.permissionslevels.SBPermissionType;
-import org.javacord.api.entity.channel.ChannelType;
+import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.entity.channel.ServerChannel;
 import org.javacord.api.entity.channel.ServerTextChannel;
-import org.javacord.api.entity.message.Message;
-import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.permission.PermissionState;
 import org.javacord.api.entity.permission.PermissionType;
@@ -30,9 +29,11 @@ import java.util.concurrent.CompletionException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
-public class TicketSlashHandler {
+public class TicketSlashHandler extends CommandHandler {
     
+    public static final String COMMAND_NAME = "ticket";
     private final TicketService ticketService;
     private final TicketsLogicDatabase ticketsLogicDatabase;
     private final TicketsLogicMessage ticketsLogicMessage;
@@ -44,17 +45,20 @@ public class TicketSlashHandler {
         this.ticketsLogicMessage = ticketsLogicMessage;
     }
     
-    public void handleCommand(SlashCommandInteraction command){
+    public void init() {
+        // TODO Va falloir déplacer des trucs ici
+        log.info("Init Ticket");
+    }
+    
+    public InteractionImmediateResponseBuilder handleCommand(SlashCommandInteraction command){
         Optional<Server> optServer = command.getServer();
         InteractionImmediateResponseBuilder responder = command.createImmediateResponder();
         if(optServer.isEmpty()){
-            responder.setContent("This command has to be used in a server.").respond();
-            return;
+            return responder.setContent("This command has to be used in a server.");
         }
         Server server = optServer.get();
         if (!Permissions.isAdmin(command.getUser(), server)) {
-            responder.setContent("You don't have permission to use this command.").respond();
-            return;
+            return responder.setContent("You don't have permission to use this command.");
         }
         SlashCommandInteractionOption baseCommand = command.getOptions().get(0);
         List<SlashCommandInteractionOption> options = baseCommand.getOptions();
@@ -62,16 +66,15 @@ public class TicketSlashHandler {
         TTicketChannelEntity ticket; // Ticket du salon
         MessageJsonTicket mess; // Variable pour le message du ticket
         // On regarde si l'option indique un salon, si oui on le récupère (évitant de le récupérer indépendamment plus tard)
-        if (options.size() > 0 && options.get(0).getName().equalsIgnoreCase("channel")) {
-            System.out.println("Il y a un channel");
+        if (!options.isEmpty() && options.get(0).getName().equalsIgnoreCase("channel")) {
+            log.debug("Il y a un channel");
             ServerChannel channel = options.get(0).getChannelValue().get();
             if (!channel.getType().isTextChannelType()) {
-                responder.setContent("The given channel is not a text channel.").respond();
-                return;
+                return responder.setContent("The given channel is not a text channel.");
             }
             ServerTextChannel textChannel = channel.asServerTextChannel().get();
             String name = baseCommand.getName();
-            System.out.println(name);
+            log.info(name);
             switch (name) {
                 // RESEND a ticket
                 case "resend": {
@@ -194,8 +197,7 @@ public class TicketSlashHandler {
                         MessageJsonTool.ButtonJson buttonJson = ticket.getMessageJsonTicket().getButtonList().get(0);
                         if (text == null) { // Supprimer le titre
                             if(buttonJson.getEmoji() == null){
-                                responder.setContent("You can't delete the button's label if there is no emoji.").respond();
-                                return;
+                                return responder.setContent("You can't delete the button's label if there is no emoji.");
                             }
                             buttonJson.setLabel("");
                         } else {
@@ -205,15 +207,13 @@ public class TicketSlashHandler {
                                 } catch (CompletionException e) {
                                     e.printStackTrace();
                                     // Erreur on répond directement et on ferme
-                                    responder.setContent("Error while getting the message from its ID.").respond();
-                                    return;
+                                    return responder.setContent("Error while getting the message from its ID.");
                                 }
                             } else {
                                 newLabel = text;
                             }
                             if(newLabel.length()>80){
-                                responder.setContent("Labels can't be longer than 80 characters.").respond();
-                                return;
+                                return responder.setContent("Labels can't be longer than 80 characters.");
                             }
                             buttonJson.setLabel(newLabel);
                         }
@@ -234,8 +234,7 @@ public class TicketSlashHandler {
                         MessageJsonTool.ButtonJson buttonJson = ticket.getMessageJsonTicket().getButtonList().get(0);
                         if (text == null) { // Supprimer le titre
                             if(buttonJson.getLabel().length() == 0){
-                                responder.setContent("You can't delete the button's emoji if there is no label.").respond();
-                                return;
+                                return responder.setContent("You can't delete the button's emoji if there is no label.");
                             }
                             buttonJson.setEmoji(null);
                         } else {
@@ -245,8 +244,7 @@ public class TicketSlashHandler {
                                     || (newEmoji.matches("^<:.{2,32}:\\d{17,19}>$")
                                     && server.getApi().getCustomEmojiById(
                                             newEmoji = newEmoji.substring(newEmoji.lastIndexOf(':')+1,newEmoji.length()-1)).isPresent()))){
-                                responder.setContent("This is not a valid emoji.").respond();
-                                return;
+                                return responder.setContent("This is not a valid emoji.");
                             }
                             buttonJson.setEmoji(newEmoji);
                         }
@@ -270,11 +268,11 @@ public class TicketSlashHandler {
                 }
                 // SET GRANT TIME on a ticket
                 case "granttime": {
-                    responder.setContent(this.ticketsLogicDatabase.setGrantTime(textChannel, baseCommand.getOptionLongValueByIndex(1).orElse(null)));
+                    responder.setContent(this.ticketsLogicDatabase.setGrantTime(textChannel, baseCommand.getArgumentLongValueByIndex(1).orElse(null)));
                     break;
                 }
                 case "grantlevel": {
-                    responder.setContent(this.ticketsLogicDatabase.setGrantLevel(textChannel, baseCommand.getOptionLongValueByIndex(1).orElse(null)));
+                    responder.setContent(this.ticketsLogicDatabase.setGrantLevel(textChannel, baseCommand.getArgumentLongValueByIndex(1).orElse(null)));
                     break;
                 }
                 default:
@@ -289,7 +287,7 @@ public class TicketSlashHandler {
                     if(role == null) {
                         responder.setContent("The given role is not a valid role.");
                     } else {
-                        Long level = baseCommand.getOptionLongValueByIndex(1).orElse(null);
+                        Long level = baseCommand.getArgumentLongValueByIndex(1).orElse(null);
                         if(level == null) {
                             if (!PermissionsLevelsHandler.deletePermLevelOfRole(SBPermissionType.TicketChannel, role)) {
                                 responder.setContent("Error while deleting the grant level of the role. Contact the developer if this error persist.");
@@ -340,9 +338,14 @@ public class TicketSlashHandler {
             }
             
             responder.setContent("Commande non implémentée pour le moment.");
-            System.out.println("Il n'y a pas de channel");
+            log.debug("Il n'y a pas de channel");
         }
-        responder.respond();
+        return responder;
+    }
+    
+    @Override
+    public String canHandle() {
+        return COMMAND_NAME;
     }
     
     // Update a field of an embed in a message

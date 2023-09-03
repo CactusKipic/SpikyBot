@@ -1,8 +1,8 @@
 package fr.cactus_industries.database.schema.table;
 
+import jakarta.persistence.*;
 import org.javacord.api.entity.channel.ServerTextChannel;
 
-import javax.persistence.*;
 import java.util.Objects;
 
 @Entity

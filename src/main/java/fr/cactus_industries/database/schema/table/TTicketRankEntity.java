@@ -1,6 +1,7 @@
 package fr.cactus_industries.database.schema.table;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
+
 import java.util.Objects;
 
 @Entity

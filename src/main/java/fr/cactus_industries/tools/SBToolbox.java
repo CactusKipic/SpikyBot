@@ -1,10 +1,13 @@
 package fr.cactus_industries.tools;
 
 import java.util.NoSuchElementException;
+
+import lombok.extern.slf4j.Slf4j;
 import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.permission.Role;
 import org.javacord.api.entity.server.Server;
 
+@Slf4j
 public class SBToolbox {
     
     // Récupération d'un salon donné en String pour le serveur passé
@@ -25,7 +28,7 @@ public class SBToolbox {
         try {
             id = Long.parseLong(str.startsWith("<#") ? str.substring(2, 20) : str);
         } catch (NumberFormatException e) {
-            System.out.println("Invalid channel.");
+            log.info("Invalid channel.");
         }
         return id;
     }
@@ -36,7 +39,7 @@ public class SBToolbox {
         try {
             id = Long.parseLong(str.startsWith("<@!") ? str.substring(3, 21) : str);
         } catch (NumberFormatException e) {
-            System.out.println("Invalid channel.");
+            log.info("Invalid channel.");
         }
         return id;
     }
@@ -59,7 +62,7 @@ public class SBToolbox {
         try {
             id = Long.parseLong(str.startsWith("<@&") ? str.substring(3, 21) : str);
         } catch (NumberFormatException e) {
-            System.out.println("Invalid role.");
+            log.info("Invalid role.");
         }
         return id;
     }
@@ -70,7 +73,7 @@ public class SBToolbox {
         try {
             id = Long.parseLong(str);
         } catch (NumberFormatException e) {
-            System.out.println("Invalid message ID.");
+            log.info("Invalid message ID.");
         }
         return id;
     }
